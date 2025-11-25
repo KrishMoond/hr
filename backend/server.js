@@ -21,6 +21,7 @@ const io = new Server(server, {
 const authRoutes = require('./routes/auth');
 const employeeRoutes = require('./routes/employees');
 const chatRoutes = require('./routes/chat');
+const messageRoutes = require('./routes/messages');
 const wellnessRoutes = require('./routes/wellness');
 const helpdeskRoutes = require('./routes/helpdesk');
 const analyticsRoutes = require('./routes/analytics');
@@ -63,6 +64,12 @@ mongoose.connect(process.env.MONGODB_URI)
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
+  // Join user-specific room for private messages
+  socket.on('join-user', (userId) => {
+    socket.join(userId);
+    console.log(`User ${userId} joined their room`);
+  });
+
   socket.on('join-chat', (chatId) => {
     socket.join(chatId);
   });
@@ -80,6 +87,7 @@ io.on('connection', (socket) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/messages', messageRoutes);
 app.use('/api/wellness', wellnessRoutes);
 app.use('/api/helpdesk', helpdeskRoutes);
 app.use('/api/analytics', analyticsRoutes);

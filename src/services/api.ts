@@ -64,6 +64,42 @@ class ApiService {
     return this.request('/auth/me');
   }
 
+  async getAllUsers() {
+    return this.request('/auth/users');
+  }
+
+  // Message methods
+  async getUsers() {
+    return this.request('/messages/users');
+  }
+
+  async getConversations() {
+    return this.request('/messages/conversations');
+  }
+
+  async getMessages(userId, page = 1) {
+    return this.request(`/messages/${userId}?page=${page}`);
+  }
+
+  async sendMessage(receiver, content) {
+    return this.request('/messages', {
+      method: 'POST',
+      body: JSON.stringify({ receiver, content }),
+    });
+  }
+
+  async markMessageAsRead(messageId: string) {
+    return this.request(`/messages/${messageId}/read`, {
+      method: 'PUT',
+    });
+  }
+
+  async markAllMessagesAsRead(userId: string) {
+    return this.request(`/messages/mark-all/${userId}`, {
+      method: 'PUT',
+    });
+  }
+
   logout() {
     this.token = null;
     localStorage.removeItem('token');
@@ -112,12 +148,7 @@ class ApiService {
     return this.request(`/chat/${chatId}/messages?page=${page}`);
   }
 
-  async sendMessage(chatId: string, data: any) {
-    return this.request(`/chat/${chatId}/messages`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
+
 
   async markMessagesAsRead(chatId: string) {
     return this.request(`/chat/${chatId}/read`, {

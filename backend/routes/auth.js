@@ -131,4 +131,18 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// Get all users for chat
+router.get('/users', auth, async (req, res) => {
+  try {
+    const users = await User.find({
+      _id: { $ne: req.user._id } // Exclude current user
+    }).select('firstName lastName email role department isActive avatar');
+    
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

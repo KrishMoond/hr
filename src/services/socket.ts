@@ -3,17 +3,35 @@ import { io, Socket } from 'socket.io-client';
 class SocketService {
   private socket: Socket | null = null;
   private isConnected = false;
+  private userId: string | null = null;
 
-  connect() {
-    if (this.socket) return;
+  connect(userId: string) {
+    // if socket already exists, just re-identify the user (join user room)
+    if (this.socket) {
+      this.userId = userId;
+      try {
+        this.socket.emit('join-user', userId);
+      } catch (err) {
+        console.error('Failed to re-join user room:', err);
+      }
+      return;
+    }
 
+    this.userId = userId;
     this.socket = io('http://localhost:5000', {
       autoConnect: true,
+      auth: {
+        userId: userId
+      }
     });
 
     this.socket.on('connect', () => {
       console.log('Connected to server');
       this.isConnected = true;
+      // Join a user-specific room
+      if (this.userId) {
+        this.socket?.emit('join-user', this.userId);
+      }
     });
 
     this.socket.on('disconnect', () => {
@@ -31,6 +49,7 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
+      this.userId = null;
     }
   }
 
@@ -56,6 +75,19 @@ class SocketService {
   offNewMessage() {
     if (this.socket) {
       this.socket.off('new-message');
+    }
+  }
+
+  // Message read receipt
+  onMessageRead(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('message-read', callback);
+    }
+  }
+
+  onUserMessagesRead(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('user-messages-read', callback);
     }
   }
 

@@ -1,83 +1,118 @@
-import { useState, useEffect } from 'react';
-import { Quote, Send, Lightbulb, Heart, Target, Zap } from 'lucide-react';
+import { useState } from 'react';
+import { Quote, Send, Bot } from 'lucide-react';
 
 interface Message {
   id: number;
-  type: 'quote' | 'advice' | 'user';
+  type: 'bot' | 'user';
   content: string;
-  author?: string;
   timestamp: string;
-  category: 'motivation' | 'leadership' | 'wisdom' | 'ethics';
+}
+
+interface BotResponse {
+  keywords: string[];
+  response: string;
+  category: 'work' | 'leadership' | 'stress' | 'career' | 'team' | 'motivation' | 'ethics';
 }
 
 export default function ChanakyaGuidance() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      type: 'quote',
-      content: "A person should not be too honest. Straight trees are cut first and honest people are screwed first.",
-      author: 'Chanakya',
-      timestamp: '9:00 AM',
-      category: 'wisdom'
-    },
-    {
-      id: 2,
-      type: 'advice',
-      content: "In your leadership role, remember that balance is key. Be honest in your intentions but strategic in your approach. Build trust while maintaining professional boundaries.",
-      timestamp: '9:01 AM',
-      category: 'leadership'
+      type: 'bot',
+      content: "🙏 Namaste! I am Chanakya, your workplace wisdom guide. Ask me about work challenges, leadership, career growth, or team issues. I have ancient wisdom for modern problems!",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
 
   const [userInput, setUserInput] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('motivation');
+  const [isTyping, setIsTyping] = useState(false);
 
-  const chanakyaQuotes = {
-    motivation: [
-      "Before you start some work, always ask yourself three questions - Why am I doing it, What the results might be and Will I be successful. Only when you think deeply and find satisfactory answers to these questions, go ahead.",
-      "Once you start working on something, don't be afraid of failure and don't abandon it. People who work sincerely are the happiest.",
-      "The biggest guru-mantra is: never share your secrets with anybody. It will destroy you."
-    ],
-    leadership: [
-      "A leader is one who knows the way, goes the way, and shows the way.",
-      "The fragrance of flowers spreads only in the direction of the wind. But the goodness of a person spreads in all directions.",
-      "Test a servant while in the discharge of his duty, a relative in difficulty, a friend in adversity, and a wife in misfortune."
-    ],
-    wisdom: [
-      "Education is the best friend. An educated person is respected everywhere. Education beats the beauty and the youth.",
-      "Books are as useful to a stupid person as a mirror is useful to a blind person.",
-      "The world's biggest power is the youth and beauty of a woman."
-    ],
-    ethics: [
-      "Never make friends with people who are above or below you in status. Such friendships will never give you any happiness.",
-      "Treat your kid like a darling for the first five years. For the next five years, scold them. By the time they turn sixteen, treat them like a friend. Your grown up children are your best friends.",
-      "The one excellent thing that can be learned from a lion is that whatever a man intends doing should be done by him with a whole-hearted and strenuous effort."
-    ]
-  };
+  const botResponses: BotResponse[] = [
+    // Work & Productivity
+    { keywords: ['work', 'job', 'task', 'productivity', 'busy', 'workload'], response: "📚 'Before you start some work, always ask yourself three questions - Why am I doing it, What the results might be and Will I be successful.' Focus on purpose, not just activity.", category: 'work' },
+    { keywords: ['deadline', 'pressure', 'urgent', 'time'], response: "⏰ 'Time is the most valuable thing we have. Don't waste it on unimportant tasks.' Prioritize wisely and work with focus, not panic.", category: 'work' },
+    { keywords: ['lazy', 'procrastination', 'delay', 'postpone'], response: "🚀 'Once you start working on something, don't be afraid of failure and don't abandon it.' Start small, but start today. Action beats perfection.", category: 'motivation' },
+    { keywords: ['quality', 'excellence', 'perfection', 'standards'], response: "💎 'Whatever work you do, do it with full dedication and sincerity.' Excellence is not a skill, it's an attitude.", category: 'work' },
+    
+    // Leadership & Management
+    { keywords: ['leader', 'leadership', 'manage', 'boss', 'authority'], response: "👑 'A leader is one who knows the way, goes the way, and shows the way.' Lead by example, not by command.", category: 'leadership' },
+    { keywords: ['team', 'teamwork', 'collaboration', 'group'], response: "🤝 'The fragrance of flowers spreads only in the direction of the wind. But the goodness of a person spreads in all directions.' Be the positive influence your team needs.", category: 'team' },
+    { keywords: ['decision', 'choice', 'decide', 'judgment'], response: "🎯 'Test a servant while in the discharge of his duty, a relative in difficulty, a friend in adversity.' Make decisions based on evidence, not emotions.", category: 'leadership' },
+    { keywords: ['delegate', 'responsibility', 'trust', 'assign'], response: "⚖️ 'Give responsibility to those who can handle it, but always verify the results.' Trust but verify - the golden rule of delegation.", category: 'leadership' },
+    
+    // Stress & Mental Health
+    { keywords: ['stress', 'tension', 'anxiety', 'worried', 'overwhelmed'], response: "🧘 'A person should not be too honest. Straight trees are cut first.' Sometimes, step back and observe before reacting. Not every battle needs to be fought.", category: 'stress' },
+    { keywords: ['angry', 'anger', 'frustrated', 'annoyed'], response: "🔥 'Anger is the enemy of wisdom.' Take three deep breaths before responding. Your future self will thank you.", category: 'stress' },
+    { keywords: ['tired', 'exhausted', 'burnout', 'fatigue'], response: "🌱 'Even the strongest tree needs rest between seasons.' Take breaks, recharge yourself. Productivity comes from energy, not just effort.", category: 'stress' },
+    { keywords: ['balance', 'life', 'personal', 'family'], response: "⚖️ 'Treat your family like a treasure and your work like a duty.' Both are important, but family gives you strength to excel at work.", category: 'stress' },
+    
+    // Career Growth
+    { keywords: ['career', 'growth', 'promotion', 'advance', 'success'], response: "📈 'Education is the best friend. An educated person is respected everywhere.' Keep learning, keep growing. Your skills are your greatest asset.", category: 'career' },
+    { keywords: ['learning', 'skill', 'knowledge', 'study', 'course'], response: "📖 'Books are as useful to a stupid person as a mirror is useful to a blind person.' Learn with purpose and apply with wisdom.", category: 'career' },
+    { keywords: ['opportunity', 'chance', 'luck', 'fortune'], response: "🎯 'Opportunity comes to those who are prepared.' Keep sharpening your skills, luck favors the prepared mind.", category: 'career' },
+    { keywords: ['change', 'new', 'different', 'switch'], response: "🔄 'Change is the law of nature. Those who resist change will be left behind.' Embrace change as a chance to grow stronger.", category: 'career' },
+    
+    // Relationships & Communication
+    { keywords: ['colleague', 'coworker', 'relationship', 'people'], response: "🤝 'Never make friends with people who are above or below you in status for wrong reasons.' Build genuine relationships based on mutual respect.", category: 'team' },
+    { keywords: ['communication', 'talk', 'speak', 'conversation'], response: "💬 'Speak only when your words are more valuable than silence.' Choose your words wisely, they have power to build or destroy.", category: 'team' },
+    { keywords: ['conflict', 'fight', 'argument', 'dispute'], response: "⚔️ 'The wise person avoids unnecessary conflicts but stands firm on principles.' Pick your battles wisely.", category: 'team' },
+    { keywords: ['help', 'support', 'assist', 'cooperation'], response: "🤲 'Help others climb the mountain, and you'll reach the summit together.' Collaboration multiplies success.", category: 'team' },
+    
+    // Ethics & Values
+    { keywords: ['honest', 'truth', 'integrity', 'ethics'], response: "💎 'Honesty is the first chapter in the book of wisdom.' Be truthful, but also be wise about when and how to speak truth.", category: 'ethics' },
+    { keywords: ['money', 'salary', 'wealth', 'rich'], response: "💰 'Wealth is not about having a lot of money; it's about having a lot of options.' Focus on building skills, money will follow.", category: 'ethics' },
+    { keywords: ['respect', 'dignity', 'honor', 'reputation'], response: "👑 'Respect is earned through actions, not demanded through position.' Your character is your true crown.", category: 'ethics' },
+    { keywords: ['mistake', 'error', 'wrong', 'failure'], response: "🌱 'Failure is the stepping stone to success.' Learn from mistakes, don't repeat them. Every failure teaches valuable lessons.", category: 'motivation' },
+    
+    // Motivation & Inspiration
+    { keywords: ['motivation', 'inspire', 'encourage', 'boost'], response: "🔥 'The one excellent thing that can be learned from a lion is that whatever a man intends doing should be done by him with a whole-hearted effort.' Give your 100% to everything you do.", category: 'motivation' },
+    { keywords: ['confidence', 'self-doubt', 'believe', 'faith'], response: "💪 'Believe in yourself and your abilities. The world will believe in you too.' Confidence comes from preparation and practice.", category: 'motivation' },
+    { keywords: ['goal', 'target', 'aim', 'objective'], response: "🎯 'Set your goals high and work systematically towards them.' A goal without a plan is just a wish.", category: 'motivation' },
+    { keywords: ['patience', 'wait', 'slow', 'time'], response: "⏳ 'Patience is the companion of wisdom.' Good things take time. Focus on consistent progress, not instant results.", category: 'motivation' },
+    
+    // Problem Solving
+    { keywords: ['problem', 'issue', 'challenge', 'difficulty'], response: "🧩 'Every problem has a solution. Sometimes you need to change your perspective to see it.' Step back, analyze, then act.", category: 'work' },
+    { keywords: ['solution', 'solve', 'fix', 'resolve'], response: "💡 'The best solutions come from understanding the root cause, not just treating symptoms.' Dig deeper to find lasting solutions.", category: 'work' },
+    { keywords: ['innovation', 'creative', 'idea', 'new'], response: "🌟 'Innovation comes from questioning the status quo.' Don't be afraid to think differently and propose new ideas.", category: 'work' },
+    
+    // Success & Achievement
+    { keywords: ['success', 'achievement', 'accomplish', 'win'], response: "🏆 'Success is not just about reaching the destination, but about who you become during the journey.' Celebrate growth, not just results.", category: 'motivation' },
+    { keywords: ['competition', 'competitor', 'rival', 'compare'], response: "🏃 'Compete with yourself, not others. Your only competition is who you were yesterday.' Focus on personal growth.", category: 'motivation' },
+    { keywords: ['recognition', 'appreciation', 'praise', 'reward'], response: "🌟 'Do good work and recognition will follow. Don't work for recognition alone.' Excellence is its own reward.", category: 'motivation' },
+    
+    // General Wisdom
+    { keywords: ['advice', 'guidance', 'help', 'suggestion'], response: "🧠 'The best advice is often the simplest: Be honest, work hard, treat others well, and never stop learning.' These principles never fail.", category: 'ethics' },
+    { keywords: ['future', 'tomorrow', 'plan', 'planning'], response: "🔮 'The future belongs to those who prepare for it today.' Plan wisely, but don't forget to live in the present.", category: 'career' },
+    { keywords: ['experience', 'learn', 'lesson', 'wisdom'], response: "📚 'Experience is the best teacher, but learning from others' experiences is wisdom.' Stay curious and keep learning.", category: 'career' },
+    
+    // Default responses
+    { keywords: ['hello', 'hi', 'hey', 'namaste'], response: "🙏 Namaste! I'm here to share ancient wisdom for your modern workplace challenges. What's on your mind today?", category: 'motivation' },
+    { keywords: ['thank', 'thanks', 'grateful'], response: "🙏 You're welcome! Remember, 'Gratitude is not only the greatest virtue but the parent of all others.' Keep spreading positivity!", category: 'ethics' },
+    { keywords: ['bye', 'goodbye', 'see you'], response: "🙏 May wisdom guide your path and success follow your efforts. Until we meet again, stay strong and keep growing!", category: 'motivation' }
+  ];
 
-  const getRandomQuote = (category: string) => {
-    const quotes = chanakyaQuotes[category as keyof typeof chanakyaQuotes];
-    return quotes[Math.floor(Math.random() * quotes.length)];
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'motivation': return Zap;
-      case 'leadership': return Target;
-      case 'wisdom': return Lightbulb;
-      case 'ethics': return Heart;
-      default: return Quote;
+  const findBestResponse = (input: string): string => {
+    const lowerInput = input.toLowerCase();
+    
+    // Find responses that match keywords
+    const matchingResponses = botResponses.filter(response => 
+      response.keywords.some(keyword => lowerInput.includes(keyword))
+    );
+    
+    if (matchingResponses.length > 0) {
+      // Return the first matching response
+      return matchingResponses[0].response;
     }
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'motivation': return '#EF4444';
-      case 'leadership': return '#3B82F6';
-      case 'wisdom': return '#8B5CF6';
-      case 'ethics': return '#10B981';
-      default: return '#6B7280';
-    }
+    
+    // Default response if no keywords match
+    const defaultResponses = [
+      "🤔 Interesting question! Remember: 'The wise person learns from every situation.' What specific challenge are you facing?",
+      "💭 'Every question contains the seed of its answer.' Can you tell me more about your situation?",
+      "🧘 'Patience and persistence solve most problems.' What area of work or life would you like guidance on?",
+      "🌟 'The right question is half the answer.' Could you be more specific about what's troubling you?"
+    ];
+    
+    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
   };
 
   const sendMessage = () => {
@@ -87,112 +122,80 @@ export default function ChanakyaGuidance() {
       id: messages.length + 1,
       type: 'user',
       content: userInput,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      category: 'motivation'
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
     setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
 
-    // Simulate Chanakya's response
+    // Simulate Chanakya thinking and responding
     setTimeout(() => {
-      const quote = getRandomQuote(selectedCategory);
-      const quoteMessage: Message = {
+      const response = findBestResponse(userInput);
+      const botMessage: Message = {
         id: messages.length + 2,
-        type: 'quote',
-        content: quote,
-        author: 'Chanakya',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        category: selectedCategory as any
+        type: 'bot',
+        content: response,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
-      const adviceMessage: Message = {
-        id: messages.length + 3,
-        type: 'advice',
-        content: generateContextualAdvice(userInput, selectedCategory),
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        category: selectedCategory as any
-      };
-
-      setMessages(prev => [...prev, quoteMessage, adviceMessage]);
-    }, 1000);
+      setMessages(prev => [...prev, botMessage]);
+      setIsTyping(false);
+    }, 1500);
 
     setUserInput('');
   };
 
-  const generateContextualAdvice = (input: string, category: string) => {
-    const adviceTemplates = {
-      motivation: "Remember, every challenge is an opportunity for growth. Stay focused on your goals and maintain your determination.",
-      leadership: "As a leader, your actions speak louder than words. Lead by example and inspire others through your dedication.",
-      wisdom: "True wisdom comes from experience and reflection. Take time to learn from both successes and failures.",
-      ethics: "Always maintain your moral compass. Ethical behavior builds trust and creates lasting relationships."
-    };
-
-    return adviceTemplates[category as keyof typeof adviceTemplates];
-  };
-
-  const getDailyWisdom = () => {
-    const today = new Date().getDay();
-    const categories = ['motivation', 'leadership', 'wisdom', 'ethics'];
-    const category = categories[today % categories.length];
-    return {
-      quote: getRandomQuote(category),
-      category
-    };
-  };
-
-  const dailyWisdom = getDailyWisdom();
-
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-800">Chanakya Guidance</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Chanakya AI Assistant</h2>
         <p className="text-gray-600">Ancient wisdom for modern workplace challenges</p>
       </div>
 
-      {/* Daily Wisdom */}
+      {/* Chatbot Info */}
       <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-6 border border-orange-200">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-            <Quote className="text-white" size={20} />
+            <Bot className="text-white" size={20} />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">Daily Wisdom</h3>
-            <p className="text-sm text-gray-600">Today's inspiration from Chanakya</p>
+            <h3 className="font-semibold text-gray-900">Chanakya AI Assistant</h3>
+            <p className="text-sm text-gray-600">Ancient wisdom for modern workplace challenges</p>
           </div>
         </div>
-        <blockquote className="text-gray-700 italic text-lg leading-relaxed">
-          "{dailyWisdom.quote}"
-        </blockquote>
-        <div className="mt-3 text-right text-sm text-gray-600">- Chanakya</div>
+        <div className="text-gray-700">
+          <p className="mb-2">💼 <strong>Ask me about:</strong></p>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div>• Work & Productivity</div>
+            <div>• Leadership & Management</div>
+            <div>• Career Growth</div>
+            <div>• Team Collaboration</div>
+            <div>• Stress Management</div>
+            <div>• Ethics & Values</div>
+          </div>
+        </div>
       </div>
 
-      {/* Category Selection */}
+      {/* Quick Suggestions */}
       <div className="bg-white rounded-2xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Your Guidance</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {Object.keys(chanakyaQuotes).map((category) => {
-            const Icon = getCategoryIcon(category);
-            const color = getCategoryColor(category);
-            
-            return (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  selectedCategory === category
-                    ? 'border-current bg-opacity-10'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                style={{ 
-                  color: selectedCategory === category ? color : '#6B7280',
-                  backgroundColor: selectedCategory === category ? `${color}10` : 'transparent'
-                }}
-              >
-                <Icon size={24} className="mx-auto mb-2" />
-                <div className="text-sm font-medium capitalize">{category}</div>
-              </button>
-            );
-          })}
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Questions</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {[
+            "How to handle work stress?",
+            "Tips for better leadership?",
+            "How to grow in career?",
+            "Dealing with difficult colleagues?",
+            "Work-life balance advice?",
+            "How to stay motivated?"
+          ].map((suggestion, index) => (
+            <button
+              key={index}
+              onClick={() => setUserInput(suggestion)}
+              className="p-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-all text-sm"
+            >
+              {suggestion}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -210,28 +213,40 @@ export default function ChanakyaGuidance() {
               <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
                 message.type === 'user'
                   ? 'bg-blue-500 text-white'
-                  : message.type === 'quote'
-                  ? 'bg-orange-100 text-orange-900 border border-orange-200'
-                  : 'bg-gray-100 text-gray-900'
+                  : 'bg-orange-100 text-orange-900 border border-orange-200'
               }`}>
-                {message.type === 'quote' && (
+                {message.type === 'bot' && (
                   <div className="flex items-center gap-2 mb-2">
-                    <Quote size={14} />
-                    <span className="text-xs font-medium">Ancient Wisdom</span>
+                    <Bot size={14} />
+                    <span className="text-xs font-medium">Chanakya</span>
                   </div>
                 )}
                 <p className="text-sm leading-relaxed">{message.content}</p>
-                {message.author && (
-                  <p className="text-xs mt-2 opacity-75">- {message.author}</p>
-                )}
                 <p className={`text-xs mt-2 ${
-                  message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
+                  message.type === 'user' ? 'text-blue-100' : 'text-orange-600'
                 }`}>
                   {message.timestamp}
                 </p>
               </div>
             </div>
           ))}
+          
+          {/* Typing Indicator */}
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="bg-orange-100 border border-orange-200 px-4 py-3 rounded-2xl">
+                <div className="flex items-center gap-2">
+                  <Bot size={14} className="text-orange-600" />
+                  <span className="text-xs font-medium text-orange-600">Chanakya is thinking...</span>
+                </div>
+                <div className="flex gap-1 mt-2">
+                  <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Input */}
@@ -256,23 +271,19 @@ export default function ChanakyaGuidance() {
         </div>
       </div>
 
-      {/* Wisdom Categories */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <h4 className="font-semibold text-gray-900 mb-2">Recent Guidance</h4>
-          <div className="text-sm text-gray-600">
-            <p>• Leadership principles for team management</p>
-            <p>• Ethical decision-making frameworks</p>
-            <p>• Motivation during challenging projects</p>
-          </div>
+      {/* Bot Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-lg p-4 shadow-sm text-center">
+          <div className="text-2xl font-bold text-orange-600">40+</div>
+          <div className="text-sm text-gray-600">Predefined Responses</div>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <h4 className="font-semibold text-gray-900 mb-2">Popular Topics</h4>
-          <div className="text-sm text-gray-600">
-            <p>• Work-life balance strategies</p>
-            <p>• Career advancement wisdom</p>
-            <p>• Team conflict resolution</p>
-          </div>
+        <div className="bg-white rounded-lg p-4 shadow-sm text-center">
+          <div className="text-2xl font-bold text-blue-600">7</div>
+          <div className="text-sm text-gray-600">Topic Categories</div>
+        </div>
+        <div className="bg-white rounded-lg p-4 shadow-sm text-center">
+          <div className="text-2xl font-bold text-green-600">24/7</div>
+          <div className="text-sm text-gray-600">Available</div>
         </div>
       </div>
     </div>

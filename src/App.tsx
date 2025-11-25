@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Users, MessageSquare, Trophy, Heart, Bell, Filter, Search, X } from 'lucide-react';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Users, MessageSquare, Trophy, Heart, Bell, Filter, Search, X, Menu } from 'lucide-react';
 import Login from './components/Login';
 import apiService from './services/api';
 import socketService from './services/socket';
@@ -10,15 +10,9 @@ import EngagementChart from './components/EngagementChart';
 import RecentActivity from './components/RecentActivity';
 import TaskManagement from './components/TaskManagement';
 import TeamOverview from './components/TeamOverview';
-import EmployeesSection from './components/EmployeesSection';
-import ChatSection from './components/ChatSection';
-import WellnessSection from './components/WellnessSection';
-import SettingsSection from './components/SettingsSection';
-import AnalyticsChart from './components/AnalyticsChart';
 import WorkforceTrends from './components/WorkforceTrends';
 import ProductivityInsights from './components/ProductivityInsights';
 import MyJourney from './components/MyJourney';
-import AIUpskilling from './components/AIUpskilling';
 import Leaderboard from './components/Leaderboard';
 import TaskNotifications from './components/TaskNotifications';
 import EarlyAlerts from './components/EarlyAlerts';
@@ -27,11 +21,20 @@ import HRHelpdesk from './components/HRHelpdesk';
 import LeaveManagement from './components/LeaveManagement';
 import ComplaintSystem from './components/ComplaintSystem';
 import HRManagement from './components/HRManagement';
+import SettingsSection from './components/SettingsSection';
+import MobileDrawer from './components/MobileDrawer';
+
+// Lazy-loaded heavy components
+const ChatSection = lazy(() => import('./components/ChatSection'));
+const EmployeesSection = lazy(() => import('./components/EmployeesSection'));
+const WellnessSection = lazy(() => import('./components/WellnessSection'));
+const AnalyticsChart = lazy(() => import('./components/AnalyticsChart'));
 
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notifications, setNotifications] = useState(3);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -56,7 +59,8 @@ function App() {
         try {
           const userData = await apiService.getCurrentUser();
           setUser(userData.user);
-          socketService.connect();
+          // pass user id to socket connector if available
+          socketService.connect(userData.user._id);
         } catch (error) {
           console.log('Token invalid, clearing storage');
           localStorage.removeItem('token');
@@ -94,7 +98,7 @@ function App() {
 
   const handleLogin = (userData: any) => {
     setUser(userData);
-    socketService.connect();
+    socketService.connect(userData._id || userData.id || userData.user?._id);
     loadDashboardData();
   };
 
@@ -132,9 +136,26 @@ function App() {
 
   return (
     <div className="flex min-h-screen bg-[#E8EDF5]">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} onLogout={handleLogout} />
 
-      <main className="flex-1 p-8">
+      {/* Mobile header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-[#0F2557] z-40 h-14 flex items-center justify-between text-white px-3" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setMobileMenuOpen(true)} className="p-3 rounded-md" aria-label="Open menu">
+            <Menu />
+          </button>
+          <div className="font-semibold text-sm">HR SARTHI</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowNotifications(!showNotifications)} className="p-3 rounded-md" aria-label="Notifications">
+            <Bell />
+          </button>
+          <button onClick={handleLogout} className="px-3 py-2 bg-red-500 rounded text-sm">Logout</button>
+        </div>
+      </div>
+      <MobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} activeTab={activeTab} setActiveTab={(tab) => { setActiveTab(tab); setMobileMenuOpen(false); }} user={user} />
+
+      <main className="flex-1 p-4 pt-16 md:p-8 md:pt-8" style={{ paddingTop: 'calc(56px + env(safe-area-inset-top))' }}>
         <div className="max-w-7xl mx-auto">
           {activeTab === 'dashboard' && (
             <>
@@ -260,7 +281,11 @@ function App() {
           {activeTab === 'notifications' && <TaskNotifications />}
           {activeTab === 'alerts' && <EarlyAlerts />}
           {activeTab === 'guidance' && <ChanakyaGuidance />}
-          {activeTab === 'chat' && <ChatSection />}
+          {activeTab === 'chat' && (
+            <Suspense fallback={<div>Loading chat...</div>}>
+              <ChatSection user={user} />
+            </Suspense>
+          )}
           {activeTab === 'employees' && <EmployeesSection />}
           {activeTab === 'analytics' && (
             <div className="space-y-6">
@@ -269,9 +294,11 @@ function App() {
                 <p className="text-gray-600">Comprehensive analytics and insights with interactive dual-series charts</p>
               </div>
               
-              {/* Advanced Analytics Charts */}
+              {/* Advanced Analytics Charts - lazy loaded */}
               <div className="grid grid-cols-1 gap-6">
-                <AnalyticsChart />
+                <Suspense fallback={<div>Loading analytics...</div>}>
+                  <AnalyticsChart />
+                </Suspense>
               </div>
               
               <div className="grid grid-cols-1 gap-6">
@@ -284,6 +311,16 @@ function App() {
                 <EngagementChart />
               </div>
             </div>
+          )}
+          {activeTab === 'employees' && (
+            <Suspense fallback={<div>Loading employees...</div>}>
+              <EmployeesSection />
+            </Suspense>
+          )}
+          {activeTab === 'wellness' && (
+            <Suspense fallback={<div>Loading wellness...</div>}>
+              <WellnessSection />
+            </Suspense>
           )}
           {activeTab === 'helpdesk' && <HRHelpdesk />}
           {activeTab === 'wellness' && <WellnessSection />}

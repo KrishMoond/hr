@@ -5,9 +5,10 @@ interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   user?: any;
+  onLogout?: () => void;
 }
 
-export default function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
+export default function Sidebar({ activeTab, setActiveTab, user, onLogout }: SidebarProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   
   const allMenuItems = [
@@ -40,7 +41,7 @@ export default function Sidebar({ activeTab, setActiveTab, user }: SidebarProps)
   ];
 
   return (
-    <div className="w-72 bg-[#0F2557] min-h-screen text-white flex flex-col">
+    <div className="hidden md:flex w-72 bg-[#0F2557] min-h-screen text-white flex-col">
       {/* Logo Section */}
       <div className="p-6 flex items-center gap-3 border-b border-[#1a3a7a]">
         <img 
@@ -129,7 +130,11 @@ export default function Sidebar({ activeTab, setActiveTab, user }: SidebarProps)
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#2a4a8a] transition-all text-left"
                     onClick={() => {
                       setShowUserMenu(false);
-                      console.log(`Clicked ${item.label}`);
+                      if (item.label === 'Logout' && onLogout) {
+                        onLogout();
+                      } else {
+                        console.log(`Clicked ${item.label}`);
+                      }
                     }}
                   >
                     <Icon size={16} />
