@@ -35,6 +35,15 @@ export default function MobileDrawer({ open, onClose, activeTab, setActiveTab, u
       : true
   ));
 
+  // Close on Escape when open
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open) onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
   // Render overlay always so we can animate opening/closing
   return (
     <div className={`fixed inset-0 z-50 ${open ? 'block' : 'hidden'}`} aria-hidden={!open}>
@@ -57,6 +66,7 @@ export default function MobileDrawer({ open, onClose, activeTab, setActiveTab, u
             <button
               key={item.id}
               onClick={() => { setActiveTab(item.id); onClose(); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab(item.id); onClose(); } }}
               className={`w-full text-left px-3 py-3 rounded ${activeTab === item.id ? 'bg-[#4169E1]' : 'hover:bg-[#1a3a7a]'}`}
             >
               {item.label}

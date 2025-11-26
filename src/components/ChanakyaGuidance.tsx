@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Quote, Send, Bot } from 'lucide-react';
+import apiService from '../services/api';
 
 interface Message {
   id: number;
@@ -91,7 +92,19 @@ export default function ChanakyaGuidance() {
     { keywords: ['bye', 'goodbye', 'see you'], response: "🙏 May wisdom guide your path and success follow your efforts. Until we meet again, stay strong and keep growing!", category: 'motivation' }
   ];
 
-  const findBestResponse = (input: string): string => {
+  const getChanakyaResponse = async (input: string): Promise<{ text: string; isCrisis: boolean }> => {
+    try {
+      const data = await apiService.chatWithChanakya(input, '');
+      const responseText = `${data.quote}\n\n💡 ${data.advice}`;
+      return { text: responseText, isCrisis: data.meta?.crisis || false };
+    } catch (error) {
+      console.error('Error getting Chanakya response:', error);
+      const fallback = findLocalResponse(input);
+      return { text: fallback, isCrisis: false };
+    }
+  };
+
+  const findLocalResponse = (input: string): string => {
     const lowerInput = input.toLowerCase();
     
     // Find responses that match keywords
@@ -128,19 +141,24 @@ export default function ChanakyaGuidance() {
     setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
 
-    // Simulate Chanakya thinking and responding
-    setTimeout(() => {
-      const response = findBestResponse(userInput);
+    // Get intelligent response from Chanakya AI
+    setTimeout(async () => {
+      const { text, isCrisis } = await getChanakyaResponse(userInput);
       const botMessage: Message = {
         id: messages.length + 2,
         type: 'bot',
-        content: response,
+        content: text,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
       setMessages(prev => [...prev, botMessage]);
       setIsTyping(false);
-    }, 1500);
+
+      // If crisis detected, show alert
+      if (isCrisis) {
+        alert('🚨 Crisis Support\n\nPlease reach out to emergency services or trusted individuals immediately. Your wellbeing is important.');
+      }
+    }, 1000);
 
     setUserInput('');
   };

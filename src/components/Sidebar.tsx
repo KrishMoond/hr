@@ -1,5 +1,6 @@
-import { LayoutGrid, Users, BarChart3, MessageSquare, Heart, Settings, LogOut, User, ChevronDown, MapPin, BookOpen, Trophy, Bell, AlertTriangle, Quote, HelpCircle, Calendar } from 'lucide-react';
+import { LayoutGrid, Users, BarChart3, MessageSquare, Heart, Settings, LogOut, User, ChevronDown, MapPin, BookOpen, Trophy, Bell, AlertTriangle, Quote, HelpCircle, Calendar, FileText } from 'lucide-react';
 import { useState } from 'react';
+import Button from './Button';
 
 interface SidebarProps {
   activeTab: string;
@@ -15,6 +16,7 @@ export default function Sidebar({ activeTab, setActiveTab, user, onLogout }: Sid
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid, badge: null, roles: ['admin', 'hr', 'employee'] },
     { id: 'journey', label: 'My Journey', icon: MapPin, badge: null, roles: ['employee'] },
     { id: 'leaves', label: 'Leave Management', icon: Calendar, badge: null, roles: ['employee'] },
+    { id: 'employee-leaves', label: 'Employee Leaves', icon: Calendar, badge: null, roles: ['admin', 'hr'] },
     { id: 'complaints', label: 'File Complaint', icon: AlertTriangle, badge: null, roles: ['employee'] },
     { id: 'upskilling', label: 'AI Upskilling', icon: BookOpen, badge: '3', roles: ['employee'] },
     { id: 'hr-management', label: 'HR Management', icon: User, badge: null, roles: ['admin', 'hr'] },
@@ -41,7 +43,7 @@ export default function Sidebar({ activeTab, setActiveTab, user, onLogout }: Sid
   ];
 
   return (
-    <div className="hidden md:flex w-72 bg-[#0F2557] min-h-screen text-white flex-col">
+    <div className="hidden md:flex w-72 bg-[#0F2557] min-h-screen text-white flex-col shadow-xl">
       {/* Logo Section */}
       <div className="p-6 flex items-center gap-3 border-b border-[#1a3a7a]">
         <img 
@@ -50,7 +52,7 @@ export default function Sidebar({ activeTab, setActiveTab, user, onLogout }: Sid
           className="w-12 h-12 rounded-full object-cover" 
         />
         <div>
-          <h1 className="text-2xl font-bold">HR SARTHI</h1>
+          <h1 className="text-2xl font-bold text-white">HR SARTHI</h1>
           <p className="text-xs text-gray-400">Human Resource Management</p>
         </div>
       </div>
@@ -60,15 +62,21 @@ export default function Sidebar({ activeTab, setActiveTab, user, onLogout }: Sid
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
-
           return (
-            <button
+            <Button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center justify-between px-4 py-3 mb-2 rounded-lg transition-all group ${
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setActiveTab(item.id);
+                }
+              }}
+              aria-pressed={isActive}
+              className={`w-full flex items-center justify-between px-4 py-3 mb-2 rounded-xl transition-all group focus-visible:ring-2 focus-visible:ring-blue-400 ${
                 isActive
-                  ? 'bg-[#4169E1] text-white shadow-lg'
-                  : 'text-gray-300 hover:bg-[#1a3a7a] hover:text-white'
+                  ? 'bg-[#4169E1] text-white shadow-lg transform scale-105'
+                  : 'text-gray-300 hover:bg-[#1a3a7a] hover:text-white hover:transform hover:scale-105'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -76,15 +84,15 @@ export default function Sidebar({ activeTab, setActiveTab, user, onLogout }: Sid
                 <span className="font-medium">{item.label}</span>
               </div>
               {item.badge && (
-                <span className={`px-2 py-1 text-xs rounded-full ${
+                <span className={`px-2 py-1 text-xs rounded-full font-medium ${
                   isActive 
                     ? 'bg-white text-[#4169E1]' 
-                    : 'bg-[#4169E1] text-white'
+                    : 'bg-[#4169E1] text-white animate-pulse'
                 }`}>
                   {item.badge}
                 </span>
               )}
-            </button>
+            </Button>
           );
         })}
       </nav>
@@ -94,7 +102,7 @@ export default function Sidebar({ activeTab, setActiveTab, user, onLogout }: Sid
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#1a3a7a] transition-all"
+            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-[#1a3a7a] transition-all"
           >
             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
               user?.role === 'admin' ? 'bg-red-500' : 
@@ -121,25 +129,35 @@ export default function Sidebar({ activeTab, setActiveTab, user, onLogout }: Sid
           </button>
 
           {showUserMenu && (
-            <div className="absolute bottom-full left-0 right-0 mb-2 bg-[#1a3a7a] rounded-lg shadow-lg overflow-hidden">
+            <div className="absolute bottom-full left-0 right-0 mb-2 bg-[#1a3a7a] rounded-xl shadow-xl overflow-hidden border border-[#2a4a8a]">
               {userMenuItems.map((item, index) => {
                 const Icon = item.icon;
                 return (
-                  <button
+                  <Button
                     key={index}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#2a4a8a] transition-all text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#2a4a8a] transition-all text-left text-white"
                     onClick={() => {
                       setShowUserMenu(false);
                       if (item.label === 'Logout' && onLogout) {
                         onLogout();
-                      } else {
-                        console.log(`Clicked ${item.label}`);
+                      } else if (item.label === 'Settings') {
+                        setActiveTab('settings');
+                      } else if (item.label === 'Profile') {
+                        setActiveTab('settings'); // Profile is part of settings
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (item.label === 'Logout' && onLogout) onLogout();
+                        else setActiveTab('settings');
+                        setShowUserMenu(false);
                       }
                     }}
                   >
                     <Icon size={16} />
                     <span className="text-sm">{item.label}</span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>

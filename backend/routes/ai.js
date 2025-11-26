@@ -210,51 +210,138 @@ function analyzeRiskFactors(employee) {
 }
 
 function generateChanakyaResponse(message, category) {
-  const quotes = {
-    motivation: [
-      "Before you start some work, always ask yourself three questions - Why am I doing it, What the results might be and Will I be successful. Only when you think deeply and find satisfactory answers to these questions, go ahead.",
-      "Once you start working on something, don't be afraid of failure and don't abandon it. People who work sincerely are the happiest.",
-      "The biggest guru-mantra is: never share your secrets with anybody. It will destroy you."
-    ],
-    leadership: [
-      "A leader is one who knows the way, goes the way, and shows the way.",
-      "The fragrance of flowers spreads only in the direction of the wind. But the goodness of a person spreads in all directions.",
-      "Test a servant while in the discharge of his duty, a relative in difficulty, a friend in adversity, and a wife in misfortune."
-    ],
-    wisdom: [
-      "Education is the best friend. An educated person is respected everywhere. Education beats the beauty and the youth.",
-      "Books are as useful to a stupid person as a mirror is useful to a blind person.",
-      "Learn from the mistakes of others... you can't live long enough to make them all yourself."
-    ],
-    ethics: [
-      "Never make friends with people who are above or below you in status. Such friendships will never give you any happiness.",
-      "The one excellent thing that can be learned from a lion is that whatever a man intends doing should be done by him with a whole-hearted and strenuous effort.",
-      "Treat your kid like a darling for the first five years. For the next five years, scold them. By the time they turn sixteen, treat them like a friend."
-    ]
+  // Analyze message for keywords and sentiment
+  const analysis = analyzeMessage(message.toLowerCase());
+  const detectedCategory = analysis.category || category;
+  
+  const responses = {
+    stress: {
+      quotes: [
+        "A person should not be too honest. Straight trees are cut first and honest people are screwed first.",
+        "The world's biggest power is the youth and beauty of a woman.",
+        "Before you start some work, always ask yourself three questions - Why am I doing it, What the results might be and Will I be successful."
+      ],
+      advice: [
+        "Take deep breaths and remember that stress is temporary. Focus on what you can control and let go of what you cannot.",
+        "Break down your challenges into smaller, manageable tasks. Progress, not perfection, is the goal.",
+        "Consider taking short breaks, practicing meditation, or talking to a trusted colleague about your concerns."
+      ]
+    },
+    anxiety: {
+      quotes: [
+        "Once you start working on something, don't be afraid of failure and don't abandon it. People who work sincerely are the happiest.",
+        "The serpent, the king, the tiger, the stinging wasp, the small child, the dog owned by other people, and the fool: these seven ought not to be awakened from sleep."
+      ],
+      advice: [
+        "Anxiety often comes from uncertainty. Focus on preparing well and trust in your abilities.",
+        "Remember that most of our fears never actually happen. Stay present and take one step at a time."
+      ]
+    },
+    motivation: {
+      quotes: [
+        "Before you start some work, always ask yourself three questions - Why am I doing it, What the results might be and Will I be successful.",
+        "Once you start working on something, don't be afraid of failure and don't abandon it. People who work sincerely are the happiest.",
+        "The biggest guru-mantra is: never share your secrets with anybody. It will destroy you."
+      ],
+      advice: [
+        "Every great achievement starts with the decision to try. Your potential is unlimited when you commit fully.",
+        "Success comes to those who persist through challenges. Keep moving forward, even when progress seems slow."
+      ]
+    },
+    leadership: {
+      quotes: [
+        "A leader is one who knows the way, goes the way, and shows the way.",
+        "The fragrance of flowers spreads only in the direction of the wind. But the goodness of a person spreads in all directions.",
+        "Test a servant while in the discharge of his duty, a relative in difficulty, a friend in adversity, and a wife in misfortune."
+      ],
+      advice: [
+        "True leadership is about serving others and helping them grow. Lead by example and inspire through your actions.",
+        "Listen more than you speak, and always consider the impact of your decisions on your team."
+      ]
+    },
+    conflict: {
+      quotes: [
+        "Never make friends with people who are above or below you in status. Such friendships will never give you any happiness.",
+        "The one excellent thing that can be learned from a lion is that whatever a man intends doing should be done by him with a whole-hearted and strenuous effort."
+      ],
+      advice: [
+        "Address conflicts directly but respectfully. Seek to understand before seeking to be understood.",
+        "Sometimes the best resolution comes from finding common ground and focusing on shared goals."
+      ]
+    },
+    career: {
+      quotes: [
+        "Education is the best friend. An educated person is respected everywhere. Education beats the beauty and the youth.",
+        "Books are as useful to a stupid person as a mirror is useful to a blind person.",
+        "Learn from the mistakes of others... you can't live long enough to make them all yourself."
+      ],
+      advice: [
+        "Continuous learning is the key to career growth. Invest in yourself and stay curious about new opportunities.",
+        "Build strong relationships and always deliver quality work. Your reputation is your most valuable asset."
+      ]
+    },
+    teamwork: {
+      quotes: [
+        "The fragrance of flowers spreads only in the direction of the wind. But the goodness of a person spreads in all directions.",
+        "Test a servant while in the discharge of his duty, a relative in difficulty, a friend in adversity, and a wife in misfortune."
+      ],
+      advice: [
+        "Great teams are built on trust, communication, and mutual respect. Contribute positively to your team's success.",
+        "Support your colleagues and celebrate their achievements. A rising tide lifts all boats."
+      ]
+    }
   };
 
-  const categoryQuotes = quotes[category] || quotes.motivation;
-  const selectedQuote = categoryQuotes[Math.floor(Math.random() * categoryQuotes.length)];
-
-  const advice = generateContextualAdvice(message, category);
+  const responseData = responses[detectedCategory] || responses.motivation;
+  const selectedQuote = responseData.quotes[Math.floor(Math.random() * responseData.quotes.length)];
+  const selectedAdvice = responseData.advice[Math.floor(Math.random() * responseData.advice.length)];
 
   return {
     quote: selectedQuote,
-    advice,
-    category
+    advice: selectedAdvice,
+    category: detectedCategory,
+    context: analysis.context
   };
 }
 
-function generateContextualAdvice(message, category) {
-  const adviceTemplates = {
-    motivation: "Remember, every challenge is an opportunity for growth. Stay focused on your goals and maintain your determination.",
-    leadership: "As a leader, your actions speak louder than words. Lead by example and inspire others through your dedication.",
-    wisdom: "True wisdom comes from experience and reflection. Take time to learn from both successes and failures.",
-    ethics: "Always maintain your moral compass. Ethical behavior builds trust and creates lasting relationships."
+function analyzeMessage(message) {
+  const keywords = {
+    stress: ['stress', 'stressed', 'pressure', 'overwhelmed', 'burden', 'tired', 'exhausted', 'burnout'],
+    anxiety: ['anxious', 'anxiety', 'worried', 'nervous', 'fear', 'scared', 'uncertain', 'doubt'],
+    motivation: ['motivation', 'inspire', 'goal', 'achieve', 'success', 'drive', 'ambition', 'determination'],
+    leadership: ['lead', 'leader', 'manage', 'team', 'guide', 'mentor', 'responsibility', 'decision'],
+    conflict: ['conflict', 'argument', 'disagreement', 'problem', 'issue', 'fight', 'dispute', 'tension'],
+    career: ['career', 'job', 'promotion', 'growth', 'opportunity', 'skill', 'development', 'future'],
+    teamwork: ['team', 'colleague', 'collaboration', 'cooperation', 'together', 'group', 'support']
   };
 
-  return adviceTemplates[category] || adviceTemplates.motivation;
+  let detectedCategory = null;
+  let maxMatches = 0;
+  let context = '';
+
+  // Find the category with the most keyword matches
+  for (const [category, categoryKeywords] of Object.entries(keywords)) {
+    const matches = categoryKeywords.filter(keyword => message.includes(keyword)).length;
+    if (matches > maxMatches) {
+      maxMatches = matches;
+      detectedCategory = category;
+    }
+  }
+
+  // Generate context based on detected keywords
+  if (detectedCategory) {
+    const matchedKeywords = keywords[detectedCategory].filter(keyword => message.includes(keyword));
+    context = `Detected ${detectedCategory} context based on: ${matchedKeywords.join(', ')}`;
+  }
+
+  return {
+    category: detectedCategory,
+    context,
+    confidence: maxMatches > 0 ? (maxMatches / message.split(' ').length) * 100 : 0
+  };
 }
+
+// This function is now integrated into generateChanakyaResponse
 
 function predictPerformance(employee) {
   // Mock performance prediction algorithm

@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { Users, MessageSquare, Trophy, Heart, Bell, Filter, Search, X, Menu } from 'lucide-react';
+import { Users, MessageSquare, Trophy, Heart, Bell, Filter, Search, X, Menu, Lightbulb } from 'lucide-react';
 import Login from './components/Login';
 import apiService from './services/api';
 import socketService from './services/socket';
@@ -13,6 +13,7 @@ import TeamOverview from './components/TeamOverview';
 import WorkforceTrends from './components/WorkforceTrends';
 import ProductivityInsights from './components/ProductivityInsights';
 import MyJourney from './components/MyJourney';
+import AIUpskilling from './components/AIUpskilling';
 import Leaderboard from './components/Leaderboard';
 import TaskNotifications from './components/TaskNotifications';
 import EarlyAlerts from './components/EarlyAlerts';
@@ -21,6 +22,7 @@ import HRHelpdesk from './components/HRHelpdesk';
 import LeaveManagement from './components/LeaveManagement';
 import ComplaintSystem from './components/ComplaintSystem';
 import HRManagement from './components/HRManagement';
+import EmployeeLeaves from './components/EmployeeLeaves';
 import SettingsSection from './components/SettingsSection';
 import MobileDrawer from './components/MobileDrawer';
 
@@ -38,6 +40,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [notifications, setNotifications] = useState(3);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isLightTheme, setIsLightTheme] = useState(true);
   const [stats, setStats] = useState({
     employees: { value: 120, trend: 8.5 },
     chats: { value: 25, trend: -2.1 },
@@ -119,6 +122,16 @@ function App() {
     setShowNotifications(false);
   };
 
+  // Reset notification counter when user opens notification panel
+  useEffect(() => {
+    if (showNotifications && notifications > 0) {
+      const timer = setTimeout(() => {
+        setNotifications(0);
+      }, 1000); // Reset after 1 second of viewing
+      return () => clearTimeout(timer);
+    }
+  }, [showNotifications, notifications]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#E8EDF5] flex items-center justify-center">
@@ -134,8 +147,14 @@ function App() {
     return <Login onLogin={handleLogin} />;
   }
 
+  const toggleTheme = () => {
+    setIsLightTheme(!isLightTheme);
+  };
+
   return (
-    <div className="flex min-h-screen bg-[#E8EDF5]">
+    <div className={`flex min-h-screen transition-all duration-300 ${
+      isLightTheme ? 'bg-[#E8EDF5]' : 'bg-gray-900'
+    }`}>
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} onLogout={handleLogout} />
 
       {/* Mobile header */}
@@ -155,37 +174,53 @@ function App() {
       </div>
       <MobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} activeTab={activeTab} setActiveTab={(tab) => { setActiveTab(tab); setMobileMenuOpen(false); }} user={user} />
 
-      <main className="flex-1 p-4 pt-16 md:p-8 md:pt-8" style={{ paddingTop: 'calc(56px + env(safe-area-inset-top))' }}>
+      {/* Theme Toggle - Top Right */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          onClick={toggleTheme}
+          className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 shadow-sm ${
+            isLightTheme 
+              ? 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200' 
+              : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600'
+          }`}
+        >
+          <Lightbulb size={16} />
+        </button>
+      </div>
+
+      <main className="flex-1 p-6 md:p-8" style={{ paddingTop: 'calc(56px + env(safe-area-inset-top))' }}>
         <div className="max-w-7xl mx-auto">
           {activeTab === 'dashboard' && (
             <>
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
-                  <h1 className="text-2xl font-bold text-gray-800">Welcome, {user.firstName}!</h1>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full capitalize">{user.role}</span>
+                  <h1 className={`text-3xl font-bold transition-colors ${
+                    isLightTheme ? 'text-gray-800' : 'text-white'
+                  }`}>Welcome, {user.firstName}!</h1>
+                  <span className="px-4 py-2 bg-[#4169E1] text-white text-sm rounded-full capitalize font-medium shadow-sm">{user.role}</span>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <div className="relative">
                     <button 
                       onClick={() => setShowNotifications(!showNotifications)}
-                      className="relative p-3 bg-[#4169E1] rounded-full text-white hover:bg-[#3559d1] transition"
+                      className="relative p-3 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
                     >
-                      <Bell size={20} />
+                      <Bell size={18} />
                       {notifications > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
                           {notifications}
                         </span>
                       )}
                     </button>
                     
                     {showNotifications && (
-                      <div className="absolute right-0 top-full mt-2 w-80 bg-[#0F2557] rounded-lg shadow-lg z-50">
-                        <div className="p-4 border-b border-[#1a3a7a]">
+                      <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50">
+                        <div className="p-4 border-b border-gray-100">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-white font-semibold">Notifications</h3>
+                            <h3 className="font-semibold text-gray-800">Notifications</h3>
                             <button 
                               onClick={clearNotifications}
-                              className="text-xs text-blue-400 hover:text-blue-300"
+                              className="text-xs text-[#4169E1] hover:text-[#3559d1] font-medium"
                             >
                               Clear all
                             </button>
@@ -193,8 +228,8 @@ function App() {
                         </div>
                         <div className="max-h-64 overflow-y-auto">
                           {notificationList.map((notification) => (
-                            <div key={notification.id} className="p-3 border-b border-[#1a3a7a] hover:bg-[#1a3a7a] transition-colors">
-                              <p className="text-sm text-gray-300">{notification.text}</p>
+                            <div key={notification.id} className="p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                              <p className="text-sm text-gray-700 font-medium">{notification.text}</p>
                               <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
                             </div>
                           ))}
@@ -204,7 +239,7 @@ function App() {
                   </div>
                   <button 
                     onClick={handleLogout}
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
+                    className="px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all font-medium shadow-sm"
                   >
                     Logout
                   </button>
@@ -212,30 +247,65 @@ function App() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <StatCard 
-                  icon={Users} 
-                  value={stats.employees.value} 
-                  label="Employees" 
-                  trend={stats.employees.trend}
-                />
-                <StatCard 
-                  icon={MessageSquare} 
-                  value={stats.chats.value} 
-                  label="Active Chats" 
-                  trend={stats.chats.trend}
-                />
-                <StatCard 
-                  icon={Trophy} 
-                  value={stats.recognitions.value} 
-                  label="Recognitions" 
-                  trend={stats.recognitions.trend}
-                />
-                <StatCard 
-                  icon={Heart} 
-                  value={stats.wellness.value} 
-                  label="Wellness Alerts" 
-                  trend={stats.wellness.trend}
-                />
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-blue-50 rounded-xl">
+                      <Users className="text-[#4169E1]" size={24} />
+                    </div>
+                    <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                      stats.employees.trend > 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+                    }`}>
+                      {stats.employees.trend > 0 ? '+' : ''}{stats.employees.trend}%
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-1">{stats.employees.value}</h3>
+                  <p className="text-gray-600 text-sm">Total Employees</p>
+                </div>
+                
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-green-50 rounded-xl">
+                      <MessageSquare className="text-green-600" size={24} />
+                    </div>
+                    <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                      stats.chats.trend > 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+                    }`}>
+                      {stats.chats.trend > 0 ? '+' : ''}{stats.chats.trend}%
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-1">{stats.chats.value}</h3>
+                  <p className="text-gray-600 text-sm">Active Chats</p>
+                </div>
+                
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-yellow-50 rounded-xl">
+                      <Trophy className="text-yellow-600" size={24} />
+                    </div>
+                    <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                      stats.recognitions.trend > 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+                    }`}>
+                      {stats.recognitions.trend > 0 ? '+' : ''}{stats.recognitions.trend}%
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-1">{stats.recognitions.value}</h3>
+                  <p className="text-gray-600 text-sm">Recognitions</p>
+                </div>
+                
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-red-50 rounded-xl">
+                      <Heart className="text-red-500" size={24} />
+                    </div>
+                    <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                      stats.wellness.trend > 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+                    }`}>
+                      {stats.wellness.trend > 0 ? '+' : ''}{stats.wellness.trend}%
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-1">{stats.wellness.value}</h3>
+                  <p className="text-gray-600 text-sm">Wellness Alerts</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -245,20 +315,20 @@ function App() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <ProductivityInsights />
-                <div className="bg-[#0F2557] rounded-2xl p-6 text-white">
-                  <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">Quick Actions</h3>
                   <div className="space-y-3">
-                    <button className="w-full p-3 bg-[#4169E1] rounded-lg hover:bg-[#3559d1] transition-all text-left">
+                    <button className="w-full p-4 bg-[#4169E1] rounded-xl hover:bg-[#3559d1] transition-all text-left text-white shadow-sm">
                       <div className="font-medium">Schedule Team Meeting</div>
-                      <div className="text-sm text-gray-300">Plan your next team sync</div>
+                      <div className="text-sm text-blue-100 mt-1">Plan your next team sync</div>
                     </button>
-                    <button className="w-full p-3 bg-[#1a3a7a] rounded-lg hover:bg-[#2a4a8a] transition-all text-left">
-                      <div className="font-medium">Generate Report</div>
-                      <div className="text-sm text-gray-300">Create performance summary</div>
+                    <button className="w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all text-left border border-gray-100">
+                      <div className="font-medium text-gray-800">Generate Report</div>
+                      <div className="text-sm text-gray-600 mt-1">Create performance summary</div>
                     </button>
-                    <button className="w-full p-3 bg-[#1a3a7a] rounded-lg hover:bg-[#2a4a8a] transition-all text-left">
-                      <div className="font-medium">Send Announcement</div>
-                      <div className="text-sm text-gray-300">Broadcast to all employees</div>
+                    <button className="w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all text-left border border-gray-100">
+                      <div className="font-medium text-gray-800">Send Announcement</div>
+                      <div className="text-sm text-gray-600 mt-1">Broadcast to all employees</div>
                     </button>
                   </div>
                 </div>
@@ -286,7 +356,11 @@ function App() {
               <ChatSection user={user} />
             </Suspense>
           )}
-          {activeTab === 'employees' && <EmployeesSection />}
+          {activeTab === 'employees' && (
+            <Suspense fallback={<div>Loading employees...</div>}>
+              <EmployeesSection />
+            </Suspense>
+          )}
           {activeTab === 'analytics' && (
             <div className="space-y-6">
               <div>
@@ -312,19 +386,14 @@ function App() {
               </div>
             </div>
           )}
-          {activeTab === 'employees' && (
-            <Suspense fallback={<div>Loading employees...</div>}>
-              <EmployeesSection />
-            </Suspense>
-          )}
           {activeTab === 'wellness' && (
             <Suspense fallback={<div>Loading wellness...</div>}>
               <WellnessSection />
             </Suspense>
           )}
           {activeTab === 'helpdesk' && <HRHelpdesk />}
-          {activeTab === 'wellness' && <WellnessSection />}
           {activeTab === 'leaves' && <LeaveManagement />}
+          {activeTab === 'employee-leaves' && <EmployeeLeaves />}
           {activeTab === 'complaints' && <ComplaintSystem />}
           {activeTab === 'hr-management' && <HRManagement />}
           {activeTab === 'settings' && <SettingsSection />}

@@ -1,0 +1,42 @@
+{
+  "stress": {
+    "quote": "\"A person should not be too honest. Straight trees are cut first.\"",
+    "advice": "When stressed, step back and observe before reacting. Take three deep breaths (inhale 4s, hold 4s, exhale 6s). Not every battle needs to be fought today. Consider reaching out to your manager or HR if the pressure persists. Remember, your wellbeing is more important than any deadline."
+  },
+  "sleep": {
+    "quote": "\"Energy is the foundation of all achievement.\"",
+    "advice": "Poor sleep worsens stress and productivity. Maintain a consistent bedtime, reduce screens 30 mins before sleep, and avoid caffeine after 2 PM. A well-rested mind makes better decisions and solves problems more creatively. If sleep issues persist, check our wellness program for relaxation resources."
+  },
+  "productivity": {
+    "quote": "\"Before you start some work, always ask yourself three questions - Why am I doing it, What the results might be and Will I be successful?\"",
+    "advice": "Use the Pomodoro Technique: 25 mins focused work, 5 mins break. Break large tasks into smaller, achievable steps. Each day, identify 3 Most Important Tasks (MITs) and tackle those first. Quality beats quantity. Focus on purpose, not just activity."
+  },
+  "leadership": {
+    "quote": "\"A leader is one who knows the way, goes the way, and shows the way.\"",
+    "advice": "Lead by example and earn trust through transparency. Build psychological safety—encourage questions and diverse perspectives. Delegate based on team strengths, not availability. Provide feedback that helps people grow. The best leaders develop other leaders around them."
+  },
+  "leave_info": {
+    "quote": "\"Rest is the reward of labor.\"",
+    "advice": "Taking leave is healthy and boosts long-term productivity. Apply via the Leave Management section in your dashboard. Check your balances: annual, sick, personal, and bonus leaves. For urgent needs, contact your manager and HR. Regular breaks prevent burnout and improve work quality."
+  },
+  "career": {
+    "quote": "\"Education is the best friend. An educated person is respected everywhere.\"",
+    "advice": "Invest in continuous learning through courses, certifications, and peer mentorship. Track your wins and share achievements during reviews. Build a professional network across departments. Seek a mentor to guide your growth. Career success is built step by step, not overnight."
+  },
+  "human_support": {
+    "quote": "\"Seeking support is a sign of strength, not weakness.\"",
+    "advice": "Your wellbeing is our priority. HR and the Employee Assistance Program (EAP) are here for career guidance, health concerns, or personal challenges. Wellness programs offer fitness, counseling, and stress management. Reach out—no question is too small."
+  },
+  "conflict": {
+    "quote": "\"The wise person avoids unnecessary conflicts but stands firm on principles.\"",
+    "advice": "Approach difficult conversations with curiosity and respect. Listen to understand, not to reply. Focus on the issue, not personal attacks. If needed, involve your manager or HR for mediation. Building relationships is more valuable than winning arguments."
+  },
+  "decision": {
+    "quote": "\"Test a servant while in the discharge of his duty; a relative in difficulty; a friend in adversity; a wife in misfortune; and a king in battle.\"",
+    "advice": "Good decisions need solid information, not just emotions. List pros/cons, consider short and long-term effects, and seek input from trusted advisors. Your instinct matters—combine it with data. A timely good decision beats a perfect decision made too late."
+  },
+  "learning": {
+    "quote": "\"Books are as useful to a stupid person as a mirror is useful to a blind person.\"",
+    "advice": "Learn with intention and apply your knowledge. Take company training programs and certifications. Stay updated with industry news. Learn from colleagues and mentors. Remember: Knowledge without action remains just information. Growth happens when you apply what you learn."
+  }
+}

@@ -33,4 +33,14 @@ const employeeSchema = new mongoose.Schema({
   team: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Employee' }]
 }, { timestamps: true });
 
+// Track leave balances (days remaining) for quick checks
+employeeSchema.add({
+  leaveBalances: {
+    annual: { type: Number, default: 14 },
+    sick: { type: Number, default: 10 },
+    personal: { type: Number, default: 5 },
+    bonus: { type: Number, default: 0 }
+  }
+});
+
 module.exports = mongoose.model('Employee', employeeSchema);

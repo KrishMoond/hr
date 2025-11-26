@@ -26,4 +26,11 @@ const leaveSchema = new mongoose.Schema({
   }]
 }, { timestamps: true });
 
+// paid: whether salary is deducted or not for this leave (true = paid/no deduction)
+leaveSchema.add({
+  paid: { type: Boolean, default: false },
+  unpaidDays: { type: Number, default: 0 },
+  deductionAmount: { type: Number, default: 0 }
+});
+
 module.exports = mongoose.model('Leave', leaveSchema);

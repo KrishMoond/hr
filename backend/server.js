@@ -27,6 +27,7 @@ const helpdeskRoutes = require('./routes/helpdesk');
 const analyticsRoutes = require('./routes/analytics');
 const settingsRoutes = require('./routes/settings');
 const aiRoutes = require('./routes/ai');
+const chanakyaRoutes = require('./routes/chanakya');
 const leaveRoutes = require('./routes/leaves');
 const complaintRoutes = require('./routes/complaints');
 
@@ -93,6 +94,7 @@ app.use('/api/helpdesk', helpdeskRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/ai', chanakyaRoutes);
 app.use('/api/leaves', leaveRoutes);
 app.use('/api/complaints', complaintRoutes);
 

@@ -192,12 +192,12 @@ export default function ChatSection({ user }: ChatSectionProps = {}) {
   }
 
   return (
-    <div className="flex h-[calc(100vh-2rem)] bg-white rounded-2xl shadow-sm overflow-hidden">
+    <div className="flex h-[calc(100vh-2rem)] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all">
       {/* Users/Conversations Sidebar */}
-      <div className="w-80 border-r border-gray-200 flex flex-col">
+      <div className="w-80 border-r border-gray-100 flex flex-col bg-gradient-to-b from-gray-50 to-white">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Team Chat</h2>
+        <div className="p-6 border-b border-gray-100">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Team Chat</h2>
           
           {/* Search */}
           <div className="relative">
@@ -207,7 +207,7 @@ export default function ChatSection({ user }: ChatSectionProps = {}) {
               placeholder="Search people..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4169E1] focus:border-transparent transition-all shadow-sm"
             />
           </div>
         </div>
@@ -221,11 +221,11 @@ export default function ChatSection({ user }: ChatSectionProps = {}) {
                 <div
                   key={conv._id}
                   onClick={() => handleUserSelect(conv)}
-                  className={`flex items-center gap-3 p-3 hover:bg-gray-50 rounded cursor-pointer ${
-                    selectedUser?._id === conv._id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                  className={`flex items-center gap-3 p-4 hover:bg-white rounded-xl cursor-pointer transition-all transform hover:scale-105 ${
+                    selectedUser?._id === conv._id ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-l-[#4169E1] shadow-sm' : 'hover:shadow-sm'
                   }`}
                 >
-                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#4169E1] to-[#3559d1] rounded-xl flex items-center justify-center text-white font-semibold shadow-sm">
                     {conv.firstName[0]}{conv.lastName[0]}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -234,7 +234,7 @@ export default function ChatSection({ user }: ChatSectionProps = {}) {
                         {conv.firstName} {conv.lastName}
                       </p>
                       {conv.unreadCount > 0 && (
-                        <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-1">
+                        <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 animate-pulse shadow-sm">
                           {conv.unreadCount}
                         </span>
                       )}
@@ -253,16 +253,16 @@ export default function ChatSection({ user }: ChatSectionProps = {}) {
               <div
                 key={u._id}
                 onClick={() => handleUserSelect(u)}
-                className={`flex items-center gap-3 p-3 hover:bg-gray-50 rounded cursor-pointer ${
-                  selectedUser?._id === u._id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                className={`flex items-center gap-3 p-4 hover:bg-white rounded-xl cursor-pointer transition-all transform hover:scale-105 ${
+                  selectedUser?._id === u._id ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-l-[#4169E1] shadow-sm' : 'hover:shadow-sm'
                 }`}
               >
                 <div className="relative">
-                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white font-semibold shadow-sm">
                     {u.firstName[0]}{u.lastName[0]}
                   </div>
                   {u.isActive && (
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border border-white"></div>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white animate-pulse shadow-sm"></div>
                   )}
                 </div>
                 <div>
@@ -280,22 +280,22 @@ export default function ChatSection({ user }: ChatSectionProps = {}) {
         {selectedUser ? (
           <>
             {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 bg-white">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+            <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#4169E1] to-[#3559d1] rounded-xl flex items-center justify-center text-white font-semibold shadow-sm">
                   {selectedUser.firstName[0]}{selectedUser.lastName[0]}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">
+                  <h3 className="font-semibold text-gray-900 text-lg">
                     {selectedUser.firstName} {selectedUser.lastName}
                   </h3>
-                  <p className="text-sm text-gray-500">{selectedUser.department}</p>
+                  <p className="text-sm text-gray-500 font-medium">{selectedUser.department}</p>
                 </div>
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-gray-50/30 to-white">
               {messages.map((message) => {
                 const isSender = message.sender._id === user._id;
                 return (
@@ -304,10 +304,10 @@ export default function ChatSection({ user }: ChatSectionProps = {}) {
                     className={`flex ${isSender ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl relative ${
+                      className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl relative shadow-sm transition-all hover:shadow-md ${
                         isSender
-                          ? 'bg-blue-500 text-white rounded-br-none'
-                          : 'bg-gray-100 text-gray-900 rounded-bl-none'
+                          ? 'bg-gradient-to-r from-[#4169E1] to-[#3559d1] text-white rounded-br-none'
+                          : 'bg-white text-gray-900 rounded-bl-none border border-gray-100'
                       }`}
                     >
                       {!isSender && (
@@ -345,23 +345,23 @@ export default function ChatSection({ user }: ChatSectionProps = {}) {
             </div>
 
             {/* Message Input */}
-            <div className="p-4 border-t border-gray-200 bg-white">
-              <div className="flex items-center gap-3">
+            <div className="p-6 border-t border-gray-100 bg-white">
+              <div className="flex items-center gap-4">
                 <div className="flex-1 relative">
                   <input
                     type="text"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Type a message..."
-                    className="w-full px-4 py-2 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Type your message..."
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4169E1] focus:border-transparent transition-all"
                   />
                 </div>
                 
                 <button
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim()}
-                  className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-3 bg-gradient-to-r from-[#4169E1] to-[#3559d1] text-white rounded-2xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
                 >
                   <Send size={20} />
                 </button>
@@ -371,8 +371,11 @@ export default function ChatSection({ user }: ChatSectionProps = {}) {
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center text-gray-500">
-              <MessageSquare size={48} className="mx-auto mb-4 opacity-50" />
-              <p>Select a user to start messaging</p>
+              <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <MessageSquare size={48} className="text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">Start a Conversation</h3>
+              <p className="text-gray-500">Select a team member to begin chatting</p>
             </div>
           </div>
         )}

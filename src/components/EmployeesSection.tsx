@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, Plus, Edit, Trash2, Mail, Phone, MapPin, Calendar, Award, TrendingUp, Eye } from 'lucide-react';
 
 interface Employee {
@@ -107,6 +107,31 @@ export default function EmployeesSection() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [selectedEmployeeLeaves, setSelectedEmployeeLeaves] = useState<any[]>([]);
+
+  // Load leaves when an employee is selected (works when employee has a backend user id in _id)
+  useEffect(() => {
+    const loadLeavesForEmployee = async () => {
+      if (!selectedEmployee) return;
+      // If selectedEmployee has a backend id field (e.g., _id or id that is an ObjectId), try to fetch
+      const empId = (selectedEmployee as any)._id || (selectedEmployee as any).userId || null;
+      if (!empId) {
+        setSelectedEmployeeLeaves([]);
+        return;
+      }
+
+      try {
+        const api = await import('../services/api');
+        const leaves = await api.default.getLeaves({ employee: empId });
+        setSelectedEmployeeLeaves(leaves);
+      } catch (err) {
+        console.error('Failed to load leaves for employee', err);
+        setSelectedEmployeeLeaves([]);
+      }
+    };
+
+    loadLeavesForEmployee();
+  }, [selectedEmployee]);
 
   const departments = ['all', ...Array.from(new Set(employees.map(emp => emp.department)))];
   const statuses = ['all', 'active', 'inactive', 'on-leave'];
@@ -141,26 +166,26 @@ export default function EmployeesSection() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Employee Management</h2>
+          <h2 className="text-3xl font-bold text-gray-800">Employee Management</h2>
           <p className="text-gray-600">Manage your team members and their information</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#4169E1] text-white rounded-lg hover:bg-[#3559d1] transition-all">
+        <button className="flex items-center gap-2 px-6 py-3 bg-[#4169E1] text-white rounded-xl hover:bg-[#3559d1] transition-all transform hover:scale-105 shadow-lg">
           <Plus size={20} />
           Add Employee
         </button>
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm">
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search employees..."
+              placeholder="Search employees by name, email, or position..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4169E1] focus:border-transparent transition-all"
             />
           </div>
           
@@ -168,7 +193,7 @@ export default function EmployeesSection() {
             <select
               value={filterDepartment}
               onChange={(e) => setFilterDepartment(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4169E1] focus:border-transparent transition-all"
             >
               {departments.map(dept => (
                 <option key={dept} value={dept}>
@@ -180,7 +205,7 @@ export default function EmployeesSection() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4169E1] focus:border-transparent transition-all"
             >
               {statuses.map(status => (
                 <option key={status} value={status}>
@@ -189,16 +214,16 @@ export default function EmployeesSection() {
               ))}
             </select>
             
-            <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+            <div className="flex border border-gray-300 rounded-xl overflow-hidden">
               <button
                 onClick={() => setViewMode('table')}
-                className={`px-3 py-2 ${viewMode === 'table' ? 'bg-[#4169E1] text-white' : 'bg-white text-gray-600'}`}
+                className={`px-4 py-3 transition-all ${viewMode === 'table' ? 'bg-[#4169E1] text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
               >
                 Table
               </button>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`px-3 py-2 ${viewMode === 'grid' ? 'bg-[#4169E1] text-white' : 'bg-white text-gray-600'}`}
+                className={`px-4 py-3 transition-all ${viewMode === 'grid' ? 'bg-[#4169E1] text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
               >
                 Grid
               </button>
@@ -208,7 +233,7 @@ export default function EmployeesSection() {
       </div>
 
       {/* Employee List */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all">
         {viewMode === 'table' ? (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -224,10 +249,10 @@ export default function EmployeesSection() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredEmployees.map((employee) => (
-                  <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={employee.id} className="hover:bg-blue-50 transition-all cursor-pointer" onClick={() => setSelectedEmployee(employee)}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 bg-[#4169E1] rounded-full flex items-center justify-center text-white font-semibold">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#4169E1] to-[#3559d1] rounded-xl flex items-center justify-center text-white font-semibold shadow-sm">
                           {employee.avatar}
                         </div>
                         <div className="ml-4">
@@ -259,15 +284,21 @@ export default function EmployeesSection() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
                         <button
-                          onClick={() => setSelectedEmployee(employee)}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                          onClick={(e) => { e.stopPropagation(); setSelectedEmployee(employee); }}
+                          className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-all"
                         >
                           <Eye size={16} />
                         </button>
-                        <button className="text-green-600 hover:text-green-900 p-1 rounded">
+                        <button 
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-green-600 hover:text-green-900 p-2 rounded-lg hover:bg-green-50 transition-all"
+                        >
                           <Edit size={16} />
                         </button>
-                        <button className="text-red-600 hover:text-red-900 p-1 rounded">
+                        <button 
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-all"
+                        >
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -280,9 +311,9 @@ export default function EmployeesSection() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
             {filteredEmployees.map((employee) => (
-              <div key={employee.id} className="bg-gray-50 rounded-lg p-6 hover:shadow-md transition-all">
+              <div key={employee.id} className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 hover:shadow-lg hover:scale-105 transition-all cursor-pointer border border-gray-100" onClick={() => setSelectedEmployee(employee)}>
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-[#4169E1] rounded-full flex items-center justify-center text-white font-semibold">
+                  <div className="w-14 h-14 bg-gradient-to-br from-[#4169E1] to-[#3559d1] rounded-xl flex items-center justify-center text-white font-semibold shadow-lg">
                     {employee.avatar}
                   </div>
                   <div className="flex-1">
@@ -315,10 +346,10 @@ export default function EmployeesSection() {
                     <div className="text-xs text-gray-500">Projects</div>
                   </div>
                   <button
-                    onClick={() => setSelectedEmployee(employee)}
-                    className="px-3 py-1 bg-[#4169E1] text-white text-sm rounded hover:bg-[#3559d1] transition-all"
+                    onClick={(e) => { e.stopPropagation(); setSelectedEmployee(employee); }}
+                    className="px-4 py-2 bg-[#4169E1] text-white text-sm rounded-lg hover:bg-[#3559d1] transition-all transform hover:scale-105 shadow-sm"
                   >
-                    View
+                    View Details
                   </button>
                 </div>
               </div>
@@ -329,7 +360,7 @@ export default function EmployeesSection() {
 
       {/* Employee Detail Modal */}
       {selectedEmployee && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedEmployee(null)}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => { setSelectedEmployee(null); setSelectedEmployeeLeaves([]); }}>
           <div className="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900">Employee Details</h3>
@@ -405,6 +436,26 @@ export default function EmployeesSection() {
                   <h5 className="font-semibold text-gray-900 mb-2">Department</h5>
                   <p className="text-gray-700">{selectedEmployee.department}</p>
                 </div>
+              </div>
+              {/* Employee Leaves (if any) */}
+              <div className="mt-6">
+                <h4 className="text-lg font-semibold mb-3">Leaves</h4>
+                {selectedEmployeeLeaves.length === 0 ? (
+                  <p className="text-sm text-gray-500">No leaves found for this employee.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {selectedEmployeeLeaves.map((leave: any) => (
+                      <div key={leave._id} className="p-3 border rounded">
+                        <div className="flex items-center justify-between">
+                          <div className="font-medium capitalize">{leave.type} leave</div>
+                          <div className="text-sm text-gray-500">{leave.status}</div>
+                        </div>
+                        <div className="text-sm text-gray-500">{leave.days} days • {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}</div>
+                        <div className="mt-2 text-sm text-gray-700">{leave.reason}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

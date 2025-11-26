@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, CheckCircle, XCircle, Plus, Filter } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, Plus, Filter, Award, AlertCircle } from 'lucide-react';
 import apiService from '../services/api';
+import LeaveSummary from './LeaveSummary';
 
 export default function LeaveManagement() {
   const [leaves, setLeaves] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState('all');
+  const [leaveBalances, setLeaveBalances] = useState(null);
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     type: 'annual',
     startDate: '',
@@ -15,7 +18,21 @@ export default function LeaveManagement() {
 
   useEffect(() => {
     loadLeaves();
+    loadUserData();
   }, [filter]);
+
+  const loadUserData = async () => {
+    try {
+      const userData = await apiService.getCurrentUser();
+      setUser(userData);
+      
+      // Load leave balances directly
+      const balances = await apiService.getLeaveBalances();
+      setLeaveBalances(balances);
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+    }
+  };
 
   const loadLeaves = async () => {
     try {
@@ -34,9 +51,29 @@ export default function LeaveManagement() {
       setShowForm(false);
       setFormData({ type: 'annual', startDate: '', endDate: '', reason: '' });
       loadLeaves();
+      loadUserData(); // Refresh balances
     } catch (error) {
       console.error('Failed to apply leave:', error);
     }
+  };
+
+  const calculateDays = () => {
+    if (formData.startDate && formData.endDate) {
+      const start = new Date(formData.startDate);
+      const end = new Date(formData.endDate);
+      return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    }
+    return 0;
+  };
+
+  const getLeaveTypeInfo = (type: string) => {
+    const info = {
+      annual: { limit: 14, name: 'Annual Leave' },
+      sick: { limit: 10, name: 'Sick Leave' },
+      personal: { limit: 5, name: 'Personal Leave' },
+      emergency: { limit: 0, name: 'Emergency Leave' }
+    };
+    return info[type] || { limit: 0, name: type };
   };
 
   const getStatusColor = (status: string) => {
@@ -59,6 +96,47 @@ export default function LeaveManagement() {
           Apply Leave
         </button>
       </div>
+
+      {/* Leave Balances */}
+      {leaveBalances && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-2 mb-2">
+              <Calendar className="text-blue-600" size={20} />
+              <h3 className="font-semibold text-blue-800">Annual Leave</h3>
+            </div>
+            <p className="text-2xl font-bold text-blue-600">{leaveBalances.annual || 0}</p>
+            <p className="text-sm text-blue-600">days remaining</p>
+          </div>
+          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="text-green-600" size={20} />
+              <h3 className="font-semibold text-green-800">Sick Leave</h3>
+            </div>
+            <p className="text-2xl font-bold text-green-600">{leaveBalances.sick || 0}</p>
+            <p className="text-sm text-green-600">days remaining</p>
+          </div>
+          <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle className="text-purple-600" size={20} />
+              <h3 className="font-semibold text-purple-800">Personal Leave</h3>
+            </div>
+            <p className="text-2xl font-bold text-purple-600">{leaveBalances.personal || 0}</p>
+            <p className="text-sm text-purple-600">days remaining</p>
+          </div>
+          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+            <div className="flex items-center gap-2 mb-2">
+              <Award className="text-yellow-600" size={20} />
+              <h3 className="font-semibold text-yellow-800">Bonus Leave</h3>
+            </div>
+            <p className="text-2xl font-bold text-yellow-600">{leaveBalances.bonus || 0}</p>
+            <p className="text-sm text-yellow-600">bonus days earned</p>
+          </div>
+        </div>
+      )}
+
+      {/* Leave Summary */}
+      <LeaveSummary />
 
       <div className="flex gap-4">
         <select
@@ -105,6 +183,31 @@ export default function LeaveManagement() {
               <p className="text-gray-800">{leave.reason}</p>
             </div>
 
+            {/* Salary Impact */}
+            {leave.status === 'approved' && (
+              <div className={`p-3 rounded-lg mb-4 ${
+                leave.paid ? 'bg-green-50 border border-green-200' : 'bg-orange-50 border border-orange-200'
+              }`}>
+                <div className="flex items-center gap-2">
+                  {leave.paid ? (
+                    <CheckCircle className="text-green-600" size={16} />
+                  ) : (
+                    <AlertCircle className="text-orange-600" size={16} />
+                  )}
+                  <p className={`text-sm font-medium ${
+                    leave.paid ? 'text-green-700' : 'text-orange-700'
+                  }`}>
+                    {leave.paid ? 'Paid Leave - No Salary Deduction' : `Unpaid Days: ${leave.unpaidDays}`}
+                  </p>
+                </div>
+                {!leave.paid && leave.deductionAmount > 0 && (
+                  <p className="text-sm text-orange-600 mt-1">
+                    Salary Deduction: ₹{leave.deductionAmount}
+                  </p>
+                )}
+              </div>
+            )}
+
             {leave.rejectionReason && (
               <div className="bg-red-50 p-3 rounded-lg">
                 <p className="text-sm text-red-600">Rejection Reason: {leave.rejectionReason}</p>
@@ -127,11 +230,16 @@ export default function LeaveManagement() {
                   className="w-full px-3 py-2 border rounded-lg"
                   required
                 >
-                  <option value="annual">Annual Leave</option>
-                  <option value="sick">Sick Leave</option>
-                  <option value="personal">Personal Leave</option>
-                  <option value="emergency">Emergency Leave</option>
+                  <option value="annual">Annual Leave (Available: {leaveBalances?.annual || 0})</option>
+                  <option value="sick">Sick Leave (Available: {leaveBalances?.sick || 0})</option>
+                  <option value="personal">Personal Leave (Available: {leaveBalances?.personal || 0})</option>
+                  <option value="emergency">Emergency Leave (No limit)</option>
                 </select>
+                {leaveBalances?.bonus > 0 && (
+                  <p className="text-sm text-yellow-600 mt-1">
+                    + {leaveBalances.bonus} bonus days available
+                  </p>
+                )}
               </div>
               
               <div>
@@ -166,6 +274,43 @@ export default function LeaveManagement() {
                   required
                 />
               </div>
+
+              {/* Leave Impact Preview */}
+              {formData.startDate && formData.endDate && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Leave Impact:</p>
+                  <p className="text-sm text-gray-600">Duration: {calculateDays()} days</p>
+                  {leaveBalances && (
+                    <div className="text-sm text-gray-600">
+                      {(() => {
+                        const days = calculateDays();
+                        const available = leaveBalances[formData.type] || 0;
+                        const bonus = leaveBalances.bonus || 0;
+                        const total = available + bonus;
+                        
+                        if (days <= available) {
+                          return <p className="text-green-600">✓ Fully covered by {formData.type} leave</p>;
+                        } else if (days <= total) {
+                          return (
+                            <div>
+                              <p className="text-yellow-600">⚠ Will use {available} {formData.type} + {days - available} bonus days</p>
+                            </div>
+                          );
+                        } else {
+                          const unpaid = days - total;
+                          return (
+                            <div>
+                              <p className="text-red-600">⚠ {unpaid} unpaid days - salary will be deducted</p>
+                              <p className="text-xs text-red-500">Uses all available leave + bonus days</p>
+                            </div>
+                          );
+                        }
+                      })()
+                      }
+                    </div>
+                  )}
+                </div>
+              )}
               
               <div className="flex gap-3">
                 <button

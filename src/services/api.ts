@@ -332,6 +332,10 @@ class ApiService {
     });
   }
 
+  async getLeaveBalances() {
+    return this.request('/leaves/balances');
+  }
+
   // Complaint methods
   async getComplaints(params?: any) {
     const queryString = params ? `?${new URLSearchParams(params)}` : '';
