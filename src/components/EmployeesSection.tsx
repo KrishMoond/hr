@@ -18,7 +18,11 @@ interface Employee {
   skills: string[];
 }
 
-export default function EmployeesSection() {
+interface EmployeesSectionProps {
+  setActiveTab?: (tab: string) => void;
+}
+
+export default function EmployeesSection({ setActiveTab }: EmployeesSectionProps) {
   const [employees] = useState<Employee[]>([
     {
       id: 1,
@@ -456,6 +460,23 @@ export default function EmployeesSection() {
                     ))}
                   </div>
                 )}
+              </div>
+              
+              {/* Employee Projects */}
+              <div className="mt-6">
+                <h4 className="text-lg font-semibold mb-3">Current Projects</h4>
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{selectedEmployee.projects}</div>
+                  <div className="text-sm text-gray-600">Active Projects</div>
+                  {setActiveTab && (
+                    <button 
+                      onClick={() => setActiveTab('my-projects')}
+                      className="mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-all"
+                    >
+                      View All Projects
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

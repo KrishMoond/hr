@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
 
 const complaintSchema = new mongoose.Schema({
-  employee: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   title: { type: String, required: true },
   description: { type: String, required: true },
   category: { 
     type: String, 
-    enum: ['harassment', 'discrimination', 'workplace', 'management', 'facilities', 'other'], 
-    required: true 
+    enum: ['general', 'harassment', 'discrimination', 'workplace-safety', 'benefits', 'payroll', 'management', 'facilities', 'other'], 
+    default: 'general'
   },
   priority: { 
     type: String, 
@@ -16,23 +16,21 @@ const complaintSchema = new mongoose.Schema({
   },
   status: { 
     type: String, 
-    enum: ['submitted', 'under-review', 'investigating', 'resolved', 'closed'], 
-    default: 'submitted' 
+    enum: ['open', 'in-progress', 'resolved', 'closed'], 
+    default: 'open' 
   },
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   resolution: String,
   resolvedAt: Date,
-  isAnonymous: { type: Boolean, default: false },
+  comments: [{
+    author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    content: String,
+    timestamp: { type: Date, default: Date.now }
+  }],
   attachments: [{
     filename: String,
     url: String,
     uploadedAt: { type: Date, default: Date.now }
-  }],
-  updates: [{
-    author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    content: String,
-    status: String,
-    timestamp: { type: Date, default: Date.now }
   }]
 }, { timestamps: true });
 

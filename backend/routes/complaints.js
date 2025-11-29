@@ -8,8 +8,7 @@ const router = express.Router();
 // File complaint (Employee)
 router.post('/', auth, [
   body('title').notEmpty(),
-  body('description').notEmpty(),
-  body('category').isIn(['harassment', 'discrimination', 'workplace', 'management', 'facilities', 'other'])
+  body('description').notEmpty()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -17,20 +16,20 @@ router.post('/', auth, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, description, category, priority = 'medium', isAnonymous = false } = req.body;
+    const { title, description, category = 'general', priority = 'medium' } = req.body;
 
     const complaint = new Complaint({
-      employee: req.user._id,
+      submittedBy: req.user._id,
       title,
       description,
       category,
       priority,
-      isAnonymous
+      status: 'open'
     });
 
     await complaint.save();
     const populatedComplaint = await Complaint.findById(complaint._id)
-      .populate('employee', 'firstName lastName email');
+      .populate('submittedBy', 'firstName lastName email');
     
     res.status(201).json(populatedComplaint);
   } catch (error) {
@@ -45,7 +44,7 @@ router.get('/', auth, async (req, res) => {
     
     // Employees can only see their own complaints
     if (req.user.role === 'employee') {
-      query.employee = req.user._id;
+      query.submittedBy = req.user._id;
     }
 
     const { status, category, priority } = req.query;
@@ -54,8 +53,9 @@ router.get('/', auth, async (req, res) => {
     if (priority) query.priority = priority;
 
     const complaints = await Complaint.find(query)
-      .populate('employee', 'firstName lastName email')
+      .populate('submittedBy', 'firstName lastName email')
       .populate('assignedTo', 'firstName lastName')
+      .populate('comments.author', 'firstName lastName')
       .sort({ createdAt: -1 });
 
     res.json(complaints);
@@ -81,19 +81,39 @@ router.put('/:id', auth, authorize('admin', 'hr'), async (req, res) => {
       complaint.resolvedAt = new Date();
     }
 
-    // Add update to history
-    complaint.updates.push({
+    await complaint.save();
+    const updatedComplaint = await Complaint.findById(complaint._id)
+      .populate('submittedBy', 'firstName lastName email')
+      .populate('assignedTo', 'firstName lastName')
+      .populate('comments.author', 'firstName lastName');
+
+    res.json(updatedComplaint);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add comment to complaint
+router.post('/:id/comment', auth, [
+  body('content').notEmpty()
+], async (req, res) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' });
+    }
+
+    complaint.comments.push({
       author: req.user._id,
-      content: `Status updated to ${status}${resolution ? '. Resolution: ' + resolution : ''}`,
-      status,
+      content: req.body.content,
       timestamp: new Date()
     });
 
     await complaint.save();
     const updatedComplaint = await Complaint.findById(complaint._id)
-      .populate('employee', 'firstName lastName email')
+      .populate('submittedBy', 'firstName lastName email')
       .populate('assignedTo', 'firstName lastName')
-      .populate('updates.author', 'firstName lastName');
+      .populate('comments.author', 'firstName lastName');
 
     res.json(updatedComplaint);
   } catch (error) {

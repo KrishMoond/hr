@@ -30,6 +30,12 @@ const aiRoutes = require('./routes/ai');
 const chanakyaRoutes = require('./routes/chanakya');
 const leaveRoutes = require('./routes/leaves');
 const complaintRoutes = require('./routes/complaints');
+const payrollRoutes = require('./routes/payroll');
+const attendanceRoutes = require('./routes/attendance');
+const recruitmentRoutes = require('./routes/recruitment');
+const projectRoutes = require('./routes/projects');
+const projectChatRoutes = require('./routes/projectChat');
+const taskRoutes = require('./routes/tasks');
 
 // Security middleware
 app.use(helmet());
@@ -71,6 +77,17 @@ io.on('connection', (socket) => {
     console.log(`User ${userId} joined their room`);
   });
 
+  // Join project room for project chat
+  socket.on('join-project', (projectId) => {
+    socket.join(`project-${projectId}`);
+    console.log(`User joined project room: project-${projectId}`);
+  });
+
+  socket.on('leave-project', (projectId) => {
+    socket.leave(`project-${projectId}`);
+    console.log(`User left project room: project-${projectId}`);
+  });
+
   socket.on('join-chat', (chatId) => {
     socket.join(chatId);
   });
@@ -97,6 +114,12 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/ai', chanakyaRoutes);
 app.use('/api/leaves', leaveRoutes);
 app.use('/api/complaints', complaintRoutes);
+app.use('/api/payroll', payrollRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/recruitment', recruitmentRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/project-chat', projectChatRoutes);
+app.use('/api/tasks', taskRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

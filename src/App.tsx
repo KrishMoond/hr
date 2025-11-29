@@ -20,17 +20,28 @@ import EarlyAlerts from './components/EarlyAlerts';
 import ChanakyaGuidance from './components/ChanakyaGuidance';
 import HRHelpdesk from './components/HRHelpdesk';
 import LeaveManagement from './components/LeaveManagement';
-import ComplaintSystem from './components/ComplaintSystem';
+import ComplaintManagement from './components/ComplaintManagement';
+import EnhancedComplaintManagement from './components/EnhancedComplaintManagement';
+import EnhancedLeaveManagement from './components/EnhancedLeaveManagement';
 import HRManagement from './components/HRManagement';
 import EmployeeLeaves from './components/EmployeeLeaves';
 import SettingsSection from './components/SettingsSection';
 import MobileDrawer from './components/MobileDrawer';
+import PayrollManagement from './components/PayrollManagement';
+import AttendanceTracking from './components/AttendanceTracking';
+import RecruitmentPortal from './components/RecruitmentPortal';
+import ProjectManagement from './components/ProjectManagement';
+import EnhancedProjectManagement from './components/EnhancedProjectManagement';
+import EmployeeProjects from './components/EmployeeProjects';
+import TaskDashboard from './components/TaskDashboard';
 
 // Lazy-loaded heavy components
 const ChatSection = lazy(() => import('./components/ChatSection'));
 const EmployeesSection = lazy(() => import('./components/EmployeesSection'));
 const WellnessSection = lazy(() => import('./components/WellnessSection'));
 const AnalyticsChart = lazy(() => import('./components/AnalyticsChart'));
+import EmployeeDashboard from './components/EmployeeDashboard';
+import AdminDashboard from './components/AdminDashboard';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -188,9 +199,170 @@ function App() {
         </button>
       </div>
 
-      <main className="flex-1 p-6 md:p-8" style={{ paddingTop: 'calc(56px + env(safe-area-inset-top))' }}>
-        <div className="max-w-7xl mx-auto">
+      <main className="flex-1 bg-gray-50 min-h-screen" style={{ paddingTop: 'calc(56px + env(safe-area-inset-top))' }}>
+        <div className="max-w-6xl mx-auto px-6 py-8">
           {activeTab === 'dashboard' && (
+            <>
+              {user.role === 'employee' ? (
+                <EmployeeDashboard user={user} />
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <h1 className={`text-3xl font-bold transition-colors ${
+                        isLightTheme ? 'text-gray-800' : 'text-white'
+                      }`}>Welcome, {user.firstName}!</h1>
+                      <span className="px-4 py-2 bg-[#4169E1] text-white text-sm rounded-full capitalize font-medium shadow-sm">{user.role}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <button 
+                          onClick={() => setShowNotifications(!showNotifications)}
+                          className="relative p-3 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
+                        >
+                          <Bell size={18} />
+                          {notifications > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                              {notifications}
+                            </span>
+                          )}
+                        </button>
+                        
+                        {showNotifications && (
+                          <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50">
+                            <div className="p-4 border-b border-gray-100">
+                              <div className="flex items-center justify-between">
+                                <h3 className="font-semibold text-gray-800">Notifications</h3>
+                                <button 
+                                  onClick={clearNotifications}
+                                  className="text-xs text-[#4169E1] hover:text-[#3559d1] font-medium"
+                                >
+                                  Clear all
+                                </button>
+                              </div>
+                            </div>
+                            <div className="max-h-64 overflow-y-auto">
+                              {notificationList.map((notification) => (
+                                <div key={notification.id} className="p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                  <p className="text-sm text-gray-700 font-medium">{notification.text}</p>
+                                  <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <button 
+                        onClick={handleLogout}
+                        className="px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all font-medium shadow-sm"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all h-32">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="p-2.5 bg-blue-50 rounded-lg">
+                          <Users className="text-[#4169E1]" size={20} />
+                        </div>
+                        <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                          stats.employees.trend > 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+                        }`}>
+                          {stats.employees.trend > 0 ? '+' : ''}{stats.employees.trend}%
+                        </span>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-800 mb-1">{stats.employees.value}</h3>
+                      <p className="text-gray-600 text-sm">Total Employees</p>
+                    </div>
+                    
+                    <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all h-32">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="p-2.5 bg-green-50 rounded-lg">
+                          <MessageSquare className="text-green-600" size={20} />
+                        </div>
+                        <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                          stats.chats.trend > 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+                        }`}>
+                          {stats.chats.trend > 0 ? '+' : ''}{stats.chats.trend}%
+                        </span>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-800 mb-1">{stats.chats.value}</h3>
+                      <p className="text-gray-600 text-sm">Active Chats</p>
+                    </div>
+                    
+                    <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all h-32">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="p-2.5 bg-yellow-50 rounded-lg">
+                          <Trophy className="text-yellow-600" size={20} />
+                        </div>
+                        <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                          stats.recognitions.trend > 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+                        }`}>
+                          {stats.recognitions.trend > 0 ? '+' : ''}{stats.recognitions.trend}%
+                        </span>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-800 mb-1">{stats.recognitions.value}</h3>
+                      <p className="text-gray-600 text-sm">Recognitions</p>
+                    </div>
+                    
+                    <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all h-32">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="p-2.5 bg-red-50 rounded-lg">
+                          <Heart className="text-red-500" size={20} />
+                        </div>
+                        <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                          stats.wellness.trend > 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+                        }`}>
+                          {stats.wellness.trend > 0 ? '+' : ''}{stats.wellness.trend}%
+                        </span>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-800 mb-1">{stats.wellness.value}</h3>
+                      <p className="text-gray-600 text-sm">Wellness Alerts</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <PerformanceChart />
+                    <EngagementChart />
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <ProductivityInsights />
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">Quick Actions</h3>
+                      <div className="space-y-3">
+                        <button className="w-full p-4 bg-[#4169E1] rounded-xl hover:bg-[#3559d1] transition-all text-left text-white shadow-sm">
+                          <div className="font-medium">Schedule Team Meeting</div>
+                          <div className="text-sm text-blue-100 mt-1">Plan your next team sync</div>
+                        </button>
+                        <button className="w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all text-left border border-gray-100">
+                          <div className="font-medium text-gray-800">Generate Report</div>
+                          <div className="text-sm text-gray-600 mt-1">Create performance summary</div>
+                        </button>
+                        <button className="w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all text-left border border-gray-100">
+                          <div className="font-medium text-gray-800">Send Announcement</div>
+                          <div className="text-sm text-gray-600 mt-1">Broadcast to all employees</div>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <TaskManagement />
+                    <TeamOverview />
+                  </div>
+
+                  <div className="mb-8">
+                    <RecentActivity />
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
+          {activeTab === 'admin-dashboard' && (
             <>
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
@@ -358,7 +530,7 @@ function App() {
           )}
           {activeTab === 'employees' && (
             <Suspense fallback={<div>Loading employees...</div>}>
-              <EmployeesSection />
+              <EmployeesSection setActiveTab={setActiveTab} />
             </Suspense>
           )}
           {activeTab === 'analytics' && (
@@ -394,8 +566,15 @@ function App() {
           {activeTab === 'helpdesk' && <HRHelpdesk />}
           {activeTab === 'leaves' && <LeaveManagement />}
           {activeTab === 'employee-leaves' && <EmployeeLeaves />}
-          {activeTab === 'complaints' && <ComplaintSystem />}
+          {activeTab === 'complaints' && <EnhancedComplaintManagement />}
+          {activeTab === 'enhanced-leaves' && <EnhancedLeaveManagement />}
           {activeTab === 'hr-management' && <HRManagement />}
+          {activeTab === 'payroll' && <PayrollManagement />}
+          {activeTab === 'attendance' && <AttendanceTracking />}
+          {activeTab === 'recruitment' && <RecruitmentPortal />}
+          {activeTab === 'projects' && <EnhancedProjectManagement />}
+          {activeTab === 'my-projects' && <EmployeeProjects />}
+          {activeTab === 'tasks' && <TaskDashboard />}
           {activeTab === 'settings' && <SettingsSection />}
         </div>
       </main>

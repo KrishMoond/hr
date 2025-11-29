@@ -1,4 +1,4 @@
-import { LayoutGrid, Users, BarChart3, MessageSquare, Heart, Settings, LogOut, User, ChevronDown, MapPin, BookOpen, Trophy, Bell, AlertTriangle, Quote, HelpCircle, Calendar, FileText } from 'lucide-react';
+import { LayoutGrid, Users, BarChart3, MessageSquare, Heart, Settings, LogOut, User, ChevronDown, MapPin, BookOpen, Trophy, Bell, AlertTriangle, Quote, HelpCircle, Calendar, FileText, DollarSign, Clock, Briefcase, FolderOpen, CheckSquare } from 'lucide-react';
 import { useState } from 'react';
 import Button from './Button';
 
@@ -15,9 +15,16 @@ export default function Sidebar({ activeTab, setActiveTab, user, onLogout }: Sid
   const allMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid, badge: null, roles: ['admin', 'hr', 'employee'] },
     { id: 'journey', label: 'My Journey', icon: MapPin, badge: null, roles: ['employee'] },
+    { id: 'attendance', label: 'Attendance', icon: Clock, badge: null, roles: ['admin', 'hr', 'employee'] },
     { id: 'leaves', label: 'Leave Management', icon: Calendar, badge: null, roles: ['employee'] },
     { id: 'employee-leaves', label: 'Employee Leaves', icon: Calendar, badge: null, roles: ['admin', 'hr'] },
-    { id: 'complaints', label: 'File Complaint', icon: AlertTriangle, badge: null, roles: ['employee'] },
+    { id: 'enhanced-leaves', label: 'All Leaves', icon: Calendar, badge: null, roles: ['admin', 'hr'] },
+    { id: 'payroll', label: 'Payroll', icon: DollarSign, badge: null, roles: ['admin', 'hr'] },
+    { id: 'recruitment', label: 'Recruitment', icon: Briefcase, badge: null, roles: ['admin', 'hr'] },
+    { id: 'projects', label: 'Projects', icon: FolderOpen, badge: null, roles: ['admin', 'hr'] },
+    { id: 'my-projects', label: 'My Projects', icon: FolderOpen, badge: null, roles: ['employee'] },
+    { id: 'tasks', label: 'My Tasks', icon: CheckSquare, badge: null, roles: ['admin', 'hr', 'employee'] },
+    { id: 'complaints', label: 'Complaints', icon: AlertTriangle, badge: null, roles: ['admin', 'hr', 'employee'] },
     { id: 'upskilling', label: 'AI Upskilling', icon: BookOpen, badge: '3', roles: ['employee'] },
     { id: 'hr-management', label: 'HR Management', icon: User, badge: null, roles: ['admin', 'hr'] },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy, badge: null, roles: ['admin', 'hr', 'employee'] },
@@ -43,22 +50,22 @@ export default function Sidebar({ activeTab, setActiveTab, user, onLogout }: Sid
   ];
 
   return (
-    <div className="hidden md:flex w-72 bg-[#0F2557] min-h-screen text-white flex-col shadow-xl">
+    <div className="hidden md:flex w-64 bg-[#0F2557] min-h-screen text-white flex-col shadow-xl">
       {/* Logo Section */}
-      <div className="p-6 flex items-center gap-3 border-b border-[#1a3a7a]">
+      <div className="px-5 py-6 flex items-center gap-3 border-b border-[#1a3a7a]">
         <img 
           src="/Hr.jpg" 
           alt="HR SARTHI Logo" 
-          className="w-12 h-12 rounded-full object-cover" 
+          className="w-10 h-10 rounded-md object-cover" 
         />
         <div>
           <h1 className="text-2xl font-bold text-white">HR SARTHI</h1>
-          <p className="text-xs text-gray-400">Human Resource Management</p>
+          <p className="text-xs text-gray-300">Human Resource Management</p>
         </div>
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 px-4 py-4">
+      <nav className="flex-1 px-3 py-4">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -73,7 +80,7 @@ export default function Sidebar({ activeTab, setActiveTab, user, onLogout }: Sid
                 }
               }}
               aria-pressed={isActive}
-              className={`w-full flex items-center justify-between px-4 py-3 mb-2 rounded-xl transition-all group focus-visible:ring-2 focus-visible:ring-blue-400 ${
+              className={`w-full flex items-center justify-between px-3 py-2 mb-2 rounded-lg transition-all group focus-visible:ring-2 focus-visible:ring-blue-400 ${
                 isActive
                   ? 'bg-[#4169E1] text-white shadow-lg transform scale-105'
                   : 'text-gray-300 hover:bg-[#1a3a7a] hover:text-white hover:transform hover:scale-105'
@@ -104,15 +111,15 @@ export default function Sidebar({ activeTab, setActiveTab, user, onLogout }: Sid
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-[#1a3a7a] transition-all"
           >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold ${
               user?.role === 'admin' ? 'bg-red-500' : 
               user?.role === 'hr' ? 'bg-blue-500' : 'bg-green-500'
             }`}>
               {user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}` : 'U'}
             </div>
             <div className="flex-1 text-left">
-              <div className="font-medium">{user ? `${user.firstName} ${user.lastName}` : 'User'}</div>
-              <div className="text-xs text-gray-400">
+              <div className="font-medium text-white">{user ? `${user.firstName} ${user.lastName}` : 'User'}</div>
+              <div className="text-xs text-gray-300">
                 {user?.email || 'user@example.com'}
                 <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
                   user?.role === 'admin' ? 'bg-red-500' : 

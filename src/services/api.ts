@@ -355,6 +355,32 @@ class ApiService {
       body: JSON.stringify(data),
     });
   }
+
+  // Generic HTTP methods
+  async get(endpoint: string, params?: any) {
+    const queryString = params ? `?${new URLSearchParams(params)}` : '';
+    return this.request(`${endpoint}${queryString}`);
+  }
+
+  async post(endpoint: string, data: any) {
+    return this.request(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async put(endpoint: string, data: any) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async delete(endpoint: string) {
+    return this.request(endpoint, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const apiService = new ApiService();
