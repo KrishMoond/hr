@@ -9,12 +9,12 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [stats, setStats] = useState({
-    totalEmployees: 0,
+    totalEmployees: null as number | null,
     activeProjects: 0,
     pendingComplaints: 0,
-    pendingLeaves: 0,
+    pendingLeaves: null as number | null,
     completionRate: 0,
-    employeeGrowth: 0
+    employeeGrowth: null as number | null
   });
 
   const [recentActivities, setRecentActivities] = useState([]);
@@ -27,19 +27,37 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const loadAdminData = async () => {
     try {
       const api = await import('../services/api');
-      
-      // Load various data
-      const employees = await api.default.get('/auth/users');
+
+      // Load employee counts/analytics
+      const countRes = await api.default.getEmployeeCount();
+      const analytics = await api.default.getEmployeeAnalytics().catch(() => null);
+
+      // Load other data
       const projects = await api.default.get('/projects');
       const complaints = await api.default.getComplaints();
-      
+
+      // Pending leaves - fetch leaves with status pending if API supports it
+      let pendingLeavesCount: number | null = null;
+      try {
+        const leavesRes = await api.default.getLeaves({ status: 'pending', page: 1, limit: 1 });
+        if (leavesRes && typeof leavesRes.total === 'number') pendingLeavesCount = leavesRes.total;
+      } catch (e) {
+        // fallback: try to fetch all leaves and count locally
+        try {
+          const leavesAll = await api.default.getLeaves();
+          if (Array.isArray(leavesAll)) pendingLeavesCount = leavesAll.filter((l: any) => l.status === 'pending').length;
+        } catch (err) {
+          pendingLeavesCount = null;
+        }
+      }
+
       setStats({
-        totalEmployees: employees.length,
+        totalEmployees: countRes && typeof countRes.count === 'number' ? countRes.count : (analytics?.totalEmployees ?? null),
         activeProjects: projects.filter((p: any) => p.status === 'active').length,
         pendingComplaints: complaints.filter((c: any) => c.status === 'open').length,
-        pendingLeaves: 5, // Mock data
-        completionRate: 78,
-        employeeGrowth: 12
+        pendingLeaves: pendingLeavesCount,
+        completionRate: analytics?.performanceStats?.avgPerformance ? Math.round(analytics.performanceStats.avgPerformance) : 0,
+        employeeGrowth: null
       });
 
       // Mock recent activities
@@ -88,9 +106,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <div className="text-sm text-gray-500">Employee Growth</div>
-            <div className="text-2xl font-bold text-green-600">+{stats.employeeGrowth}%</div>
-          </div>
+              <div className="text-sm text-gray-500">Employee Growth</div>
+              <div className="text-2xl font-bold text-green-600">{stats.employeeGrowth !== null ? `+${stats.employeeGrowth}%` : '—'}</div>
+            </div>
         </div>
       </div>
 
@@ -102,10 +120,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               <Users className="text-blue-600" size={24} />
             </div>
             <span className="text-sm font-medium px-2 py-1 rounded-full bg-green-50 text-green-600">
-              +{stats.employeeGrowth}%
+              {stats.employeeGrowth !== null ? `+${stats.employeeGrowth}%` : '—'}
             </span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-1">{stats.totalEmployees}</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-1">{stats.totalEmployees !== null ? stats.totalEmployees : '—'}</h3>
           <p className="text-gray-600 text-sm">Total Employees</p>
         </div>
 
@@ -144,7 +162,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               Review
             </span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-1">{stats.pendingLeaves}</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-1">{stats.pendingLeaves !== null ? stats.pendingLeaves : '—'}</h3>
           <p className="text-gray-600 text-sm">Pending Leaves</p>
         </div>
       </div>

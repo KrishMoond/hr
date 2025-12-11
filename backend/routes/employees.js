@@ -6,6 +6,17 @@ const { auth, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Get employee count
+router.get('/count', auth, async (req, res) => {
+  try {
+    const count = await User.countDocuments({ role: { $in: ['employee', 'hr', 'admin'] } });
+    res.json({ count });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get all employees
 router.get('/', auth, async (req, res) => {
   try {

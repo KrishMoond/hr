@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.PROD 
+  ? 'https://your-backend.vercel.app/api' 
+  : 'http://localhost:5000/api';
 
 class ApiService {
   private token: string | null = null;
@@ -81,7 +83,7 @@ class ApiService {
     return this.request(`/messages/${userId}?page=${page}`);
   }
 
-  async sendMessage(receiver, content) {
+  async sendMessage(receiver, content) {  
     return this.request('/messages', {
       method: 'POST',
       body: JSON.stringify({ receiver, content }),
@@ -109,6 +111,10 @@ class ApiService {
   async getEmployees(params?: any) {
     const queryString = params ? `?${new URLSearchParams(params)}` : '';
     return this.request(`/employees${queryString}`);
+  }
+
+  async getEmployeeCount() {
+    return this.request('/employees/count');
   }
 
   async getEmployee(id: string) {
@@ -353,6 +359,32 @@ class ApiService {
     return this.request(`/complaints/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    });
+  }
+
+  // Task methods
+  async getTasks(params?: any) {
+    const queryString = params ? `?${new URLSearchParams(params)}` : '';
+    return this.request(`/tasks${queryString}`);
+  }
+
+  async createTask(data: any) {
+    return this.request('/tasks', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTask(id: string, data: any) {
+    return this.request(`/tasks/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTask(id: string) {
+    return this.request(`/tasks/${id}`, {
+      method: 'DELETE',
     });
   }
 

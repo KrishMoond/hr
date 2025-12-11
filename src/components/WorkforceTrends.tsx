@@ -10,7 +10,7 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, UserPlus, UserMinus, Calendar } from 'lucide-react';
 
 ChartJS.register(
@@ -26,6 +26,11 @@ ChartJS.register(
 
 export default function WorkforceTrends() {
   const [selectedView, setSelectedView] = useState('headcount');
+  const [totalEmployees, setTotalEmployees] = useState<number | null>(null);
+  const [activeEmployees, setActiveEmployees] = useState<number | null>(null);
+  const [onLeaveEmployees, setOnLeaveEmployees] = useState<number | null>(null);
+  const [newHiresYTD, setNewHiresYTD] = useState<number | null>(null);
+  const [departuresYTD, setDeparturesYTD] = useState<number | null>(null);
 
   const headcountData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -170,13 +175,13 @@ export default function WorkforceTrends() {
     switch (selectedView) {
       case 'headcount':
         return [
-          { label: 'Total Employees', value: '120', change: '+22%', icon: Users, color: '#4169E1' },
-          { label: 'Active Employees', value: '118', change: '+24%', icon: Users, color: '#10B981' },
+          { label: 'Total Employees', value: totalEmployees !== null ? String(totalEmployees) : '—', change: '+22%', icon: Users, color: '#4169E1' },
+          { label: 'Active Employees', value: activeEmployees !== null ? String(activeEmployees) : '—', change: '+24%', icon: Users, color: '#10B981' },
         ];
       case 'hiring':
         return [
-          { label: 'New Hires (YTD)', value: '64', change: '-15%', icon: UserPlus, color: '#8B5CF6' },
-          { label: 'Departures (YTD)', value: '39', change: '+8%', icon: UserMinus, color: '#EF4444' },
+          { label: 'New Hires (YTD)', value: newHiresYTD !== null ? String(newHiresYTD) : '—', change: '-15%', icon: UserPlus, color: '#8B5CF6' },
+          { label: 'Departures (YTD)', value: departuresYTD !== null ? String(departuresYTD) : '—', change: '+8%', icon: UserMinus, color: '#EF4444' },
         ];
       case 'departments':
         return [
@@ -256,6 +261,48 @@ export default function WorkforceTrends() {
   ];
 
   const stats = getViewStats();
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const api = await import('../services/api');
+        // fetch counts
+        const countRes = await api.default.getEmployeeCount();
+        if (mounted && countRes && typeof countRes.count === 'number') {
+          setTotalEmployees(countRes.count);
+        }
+
+        // fetch analytics overview
+        const analytics = await api.default.getEmployeeAnalytics();
+        if (!mounted) return;
+
+        if (analytics) {
+          if (typeof analytics.totalEmployees === 'number') setTotalEmployees(analytics.totalEmployees);
+          if (typeof analytics.activeEmployees === 'number') setActiveEmployees(analytics.activeEmployees);
+          if (typeof analytics.onLeaveEmployees === 'number') setOnLeaveEmployees(analytics.onLeaveEmployees);
+          // If analytics doesn't provide hires/departures, leave as null
+        }
+
+        // Try to fetch hires/departures if available from employees endpoint (optional)
+        try {
+          const empList = await api.default.getEmployees({ page: 1, limit: 1 });
+          // some backends may return total in employees response
+          if (empList && typeof empList.total === 'number') {
+            // total is already set but keep for parity
+            if (mounted && totalEmployees === null) setTotalEmployees(empList.total);
+          }
+        } catch (e) {
+          // ignore optional
+        }
+      } catch (error) {
+        console.error('Error loading employee stats:', error);
+      }
+    };
+
+    load();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Users, BarChart3, Clock, AlertCircle, CheckCircle, Eye, Edit, Send, Filter, Search, Star, Target, Zap, Briefcase, TrendingUp, Activity, Settings, MoreHorizontal, MessageSquare } from 'lucide-react';
+import { Plus, Calendar, Users, BarChart3, Clock, AlertCircle, CheckCircle, Eye, Edit, Send, Filter, Search, Star, Target, Zap, Briefcase, TrendingUp, Activity, Settings, MoreHorizontal, MessageSquare, UserPlus } from 'lucide-react';
 import ProjectChat from './ProjectChat';
+import TaskAssignment from './TaskAssignment';
 
 interface Project {
   _id: string;
@@ -56,6 +57,7 @@ const EnhancedProjectManagement: React.FC = () => {
 
   const [newTag, setNewTag] = useState('');
   const [selectedProjectChat, setSelectedProjectChat] = useState<Project | null>(null);
+  const [selectedProjectForTask, setSelectedProjectForTask] = useState<Project | null>(null);
 
   useEffect(() => {
     fetchProjects();
@@ -303,20 +305,20 @@ const EnhancedProjectManagement: React.FC = () => {
       </div>
 
       {/* Projects Grid */}
-      <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto' : 'space-y-4 max-w-4xl mx-auto'}>
+      <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto' : 'space-y-6 max-w-4xl mx-auto'}>
         {filteredProjects.map((project) => (
-          <div key={project._id} className={`bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-all duration-200 ${viewMode === 'list' ? 'p-5' : 'p-5 h-96 flex flex-col'}`}>
+          <div key={project._id} className={`bg-white rounded-xl border border-gray-100 hover:shadow-md transition-all duration-200 w-80 ${viewMode === 'list' ? 'p-5' : 'p-5 flex flex-col'}`} style={{boxShadow: '0 4px 12px rgba(0,0,0,0.05)'}}>
             {/* Project Header */}
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-2">
                   {getPriorityIcon(project.priority)}
-                  <h3 className="text-base font-semibold text-gray-900 leading-tight truncate">{project.title}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 leading-tight truncate">{project.title}</h3>
                 </div>
-                <p className="text-sm text-gray-600 leading-snug line-clamp-2">{project.description}</p>
+                <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">{project.description}</p>
               </div>
               <div className="flex items-center gap-2 ml-4">
-                <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(project.status)}`}>
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(project.status)}`}>
                   {project.status.replace('-', ' ').toUpperCase()}
                 </span>
                 <button className="p-1 hover:bg-gray-100 rounded">
@@ -328,37 +330,39 @@ const EnhancedProjectManagement: React.FC = () => {
             {/* Progress Bar */}
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-700">Progress</span>
-                <span className="text-sm text-gray-600">{project.progress}%</span>
+                <span className="text-sm font-medium text-gray-500">Progress</span>
+                <span className="text-lg font-bold text-gray-900">{project.progress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-[#4169E1] h-2 rounded-full transition-all duration-300"
                   style={{ width: `${project.progress}%` }}
                 ></div>
               </div>
             </div>
 
             {/* Project Stats */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <div className="text-lg font-bold text-gray-900">{project.completedTasks}</div>
-                <div className="text-xs text-gray-500">Completed</div>
-              </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <div className="text-lg font-bold text-gray-900">{project.totalTasks}</div>
-                <div className="text-xs text-gray-500">Total Tasks</div>
+            <div className="bg-gray-50 rounded-lg p-3 mb-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-gray-900">{project.completedTasks}</div>
+                  <div className="text-xs font-medium text-gray-500">Completed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-gray-900">{project.totalTasks}</div>
+                  <div className="text-xs font-medium text-gray-500">Total Tasks</div>
+                </div>
               </div>
             </div>
 
             {/* Team Members */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">Team</span>
-                <span className="text-xs text-gray-500">{project.teamMembers.length} members</span>
+                <span className="text-sm font-medium text-gray-500">Team</span>
+                <span className="text-xs font-medium text-gray-500">{project.teamMembers.length} members</span>
               </div>
               <div className="flex items-center gap-1">
-                {project.teamMembers.slice(0, 5).map((member) => (
+                {project.teamMembers.slice(0, 3).map((member) => (
                   <div
                     key={member._id}
                     className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-semibold border-2 border-white shadow-sm"
@@ -367,9 +371,9 @@ const EnhancedProjectManagement: React.FC = () => {
                     {member.firstName[0]}{member.lastName[0]}
                   </div>
                 ))}
-                {project.teamMembers.length > 5 && (
+                {project.teamMembers.length > 3 && (
                   <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs font-semibold border-2 border-white">
-                    +{project.teamMembers.length - 5}
+                    +{project.teamMembers.length - 3}
                   </div>
                 )}
               </div>
@@ -377,26 +381,26 @@ const EnhancedProjectManagement: React.FC = () => {
 
             {/* Timeline */}
             <div className="mb-4">
-              <div className="flex items-center text-xs text-gray-500 mb-1">
+              <div className="flex items-center text-xs font-medium text-gray-500 mb-1">
                 <Calendar className="h-3 w-3 mr-1" />
                 Timeline
               </div>
-              <div className="text-sm text-gray-700">
+              <div className="text-sm font-medium text-gray-700">
                 {new Date(project.startDate).toLocaleDateString()} - {new Date(project.endDate).toLocaleDateString()}
               </div>
             </div>
 
             {/* Tags */}
             {project.tags && project.tags.length > 0 && (
-              <div className="mb-4">
-                <div className="flex flex-wrap gap-1">
+              <div className="mb-4 overflow-x-auto">
+                <div className="flex gap-2 pb-1">
                   {project.tags.slice(0, 3).map((tag, index) => (
-                    <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                    <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md whitespace-nowrap">
                       {tag}
                     </span>
                   ))}
                   {project.tags.length > 3 && (
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                    <span className="px-2 py-1 bg-gray-50 text-gray-500 text-xs rounded-md whitespace-nowrap">
                       +{project.tags.length - 3}
                     </span>
                   )}
@@ -407,22 +411,29 @@ const EnhancedProjectManagement: React.FC = () => {
             {/* Actions */}
             <div className="mt-auto pt-3 border-t border-gray-100">
               <div className="flex items-center justify-between">
-                <div className="text-xs text-gray-500">
+                <div className="text-xs font-medium text-gray-500">
                   PM: {project.projectManager.firstName} {project.projectManager.lastName}
                 </div>
                 <div className="flex items-center gap-1">
-                  <button className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                    <Eye className="h-3.5 w-3.5" />
+                  <button 
+                    onClick={() => setSelectedProjectForTask(project)}
+                    className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                    title="Assign Task"
+                  >
+                    <UserPlus className="h-4 w-4" />
                   </button>
-                  <button className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors">
-                    <Edit className="h-3.5 w-3.5" />
+                  <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                    <Eye className="h-4 w-4" />
+                  </button>
+                  <button className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                    <Edit className="h-4 w-4" />
                   </button>
                   <button 
                     onClick={() => setSelectedProjectChat(project)}
-                    className="p-1.5 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                    className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                     title="Team Chat"
                   >
-                    <MessageSquare className="h-3.5 w-3.5" />
+                    <MessageSquare className="h-4 w-4" />
                   </button>
                 </div>
               </div>
@@ -693,6 +704,20 @@ const EnhancedProjectManagement: React.FC = () => {
           projectTitle={selectedProjectChat.title}
           currentUser={currentUser}
           onClose={() => setSelectedProjectChat(null)}
+        />
+      )}
+
+      {/* Task Assignment */}
+      {selectedProjectForTask && (
+        <TaskAssignment
+          projectId={selectedProjectForTask._id}
+          projectTitle={selectedProjectForTask.title}
+          teamMembers={selectedProjectForTask.teamMembers}
+          onClose={() => setSelectedProjectForTask(null)}
+          onTaskCreated={() => {
+            fetchProjects();
+            setSelectedProjectForTask(null);
+          }}
         />
       )}
     </div>

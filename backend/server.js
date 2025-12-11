@@ -13,7 +13,9 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: process.env.NODE_ENV === 'production' 
+      ? process.env.FRONTEND_URL || 'https://your-frontend.vercel.app'
+      : "http://localhost:5173",
     methods: ["GET", "POST"]
   }
 });
@@ -51,7 +53,9 @@ app.use(limiter);
 
 // CORS
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL || 'https://your-frontend.vercel.app'
+    : 'http://localhost:5173',
   credentials: true
 }));
 
@@ -139,5 +143,10 @@ server.listen(PORT, () => {
 
 // Make io available globally for routes
 global.io = io;
+app.set('io', io);
+
+// Initialize MetricsUpdater
+const MetricsUpdater = require('./utils/metricsUpdater');
+global.metricsUpdater = new MetricsUpdater(io);
 
 module.exports = { app, io };
