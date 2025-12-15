@@ -8,9 +8,18 @@ const { Server } = require('socket.io');
 const path = require('path');
 require('dotenv').config();
 
-// Import security middleware
-const { generalLimiter, sanitizeError } = require('./middleware/security');
-const { requestLogger, logger } = require('./middleware/logging');
+// Import security middleware (with fallbacks)
+let generalLimiter, sanitizeError, requestLogger, logger;
+try {
+  ({ generalLimiter, sanitizeError } = require('./middleware/security'));
+  ({ requestLogger, logger } = require('./middleware/logging'));
+} catch (error) {
+  console.log('Middleware not found, using fallbacks');
+  generalLimiter = (req, res, next) => next();
+  sanitizeError = (err, req, res, next) => res.status(500).json({ error: 'Server error' });
+  requestLogger = (req, res, next) => next();
+  logger = { info: console.log, error: console.error, warn: console.warn };
+}
 
 const app = express();
 const server = createServer(app);
@@ -192,7 +201,39 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/project-chat', projectChatRoutes);
 app.use('/api/tasks', taskRoutes);
 
-// Enhanced health check
+// Direct routes for production frontend compatibility
+app.use('/auth', authRoutes);
+app.use('/employees', employeeRoutes);
+app.use('/chat', chatRoutes);
+app.use('/messages', messageRoutes);
+app.use('/wellness', wellnessRoutes);
+app.use('/helpdesk', helpdeskRoutes);
+app.use('/analytics', analyticsRoutes);
+app.use('/settings', settingsRoutes);
+app.use('/ai', aiRoutes);
+app.use('/leaves', leaveRoutes);
+app.use('/complaints', complaintRoutes);
+app.use('/payroll', payrollRoutes);
+app.use('/attendance', attendanceRoutes);
+app.use('/recruitment', recruitmentRoutes);
+app.use('/projects', projectRoutes);
+app.use('/project-chat', projectChatRoutes);
+app.use('/tasks', taskRoutes);
+
+// Health check endpoints
+app.get('/health', (req, res) => {
+  const healthCheck = {
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV,
+    version: process.env.npm_package_version || '1.0.0',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  };
+  
+  res.json(healthCheck);
+});
+
 app.get('/api/health', (req, res) => {
   const healthCheck = {
     status: 'OK',
