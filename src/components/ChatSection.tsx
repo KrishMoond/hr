@@ -92,7 +92,12 @@ export default function ChatSection({ user }: ChatSectionProps = {}) {
       });
 
       return () => {
-        socketService.offNewMessage();
+        // remove listeners and disconnect to ensure a fresh socket when user changes
+        try {
+          socketService.off('new-message');
+          socketService.off('message-read');
+        } catch (err) {}
+        socketService.disconnect();
       };
     }
   }, [user?._id]);
@@ -100,6 +105,10 @@ export default function ChatSection({ user }: ChatSectionProps = {}) {
   useEffect(() => {
     // reload users and conversations whenever user changes (e.g., switch account)
     if (user?._id) {
+      // clear previous selection/messages to avoid showing stale data
+      setSelectedUser(null);
+      setMessages([]);
+      setReadReceipts(new Set());
       loadData();
     }
   }, [user?._id]);
@@ -107,12 +116,28 @@ export default function ChatSection({ user }: ChatSectionProps = {}) {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [usersData, conversationsData] = await Promise.all([
+      // Use allSettled so one failing call won't keep the UI stuck loading
+      const results = await Promise.allSettled([
         apiService.getUsers(),
         apiService.getConversations()
       ]);
-      setUsers(usersData);
-      setConversations(conversationsData);
+
+      const usersResult = results[0];
+      const convResult = results[1];
+
+      if (usersResult.status === 'fulfilled' && Array.isArray(usersResult.value)) {
+        setUsers(usersResult.value);
+      } else {
+        console.error('Failed to load users:', usersResult);
+        setUsers([]);
+      }
+
+      if (convResult.status === 'fulfilled' && Array.isArray(convResult.value)) {
+        setConversations(convResult.value);
+      } else {
+        console.error('Failed to load conversations:', convResult);
+        setConversations([]);
+      }
     } catch (error) {
       console.error('Failed to load chat data:', error);
     } finally {

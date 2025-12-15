@@ -5,7 +5,8 @@ require('dotenv').config();
 
 const checkAdmin = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/hr_dev';
+    await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
 
     // Find admin user

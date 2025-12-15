@@ -1,6 +1,21 @@
-const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://your-backend.vercel.app/api' 
-  : 'http://localhost:5000/api';
+const ENV_API_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = ENV_API_URL && ENV_API_URL !== ''
+  ? ENV_API_URL
+  : (typeof window !== 'undefined'
+      ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+          ? 'http://localhost:5000/api'
+          : `${window.location.origin}/api`
+      : '/api');
+
+// Helpful debug: show which API base URL is being used in development
+try {
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.info('[apiService] API_BASE_URL =', API_BASE_URL);
+  }
+} catch (err) {
+  // ignore in non-vite envs
+}
 
 class ApiService {
   private token: string | null = null;
@@ -104,7 +119,20 @@ class ApiService {
 
   logout() {
     this.token = null;
-    localStorage.removeItem('token');
+    // Clear stored token and any session-related keys
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    } catch (err) {
+      // ignore
+    }
+
+    // Notify other parts of the app that logout happened
+    try {
+      window.dispatchEvent(new CustomEvent('app:logout'));
+    } catch (err) {
+      // ignore in non-browser env
+    }
   }
 
   // Employee methods

@@ -94,6 +94,17 @@ function App() {
     }
   }, [user]);
 
+  // Listen for global logout events (e.g., from apiService.logout)
+  useEffect(() => {
+    const onGlobalLogout = () => {
+      socketService.disconnect();
+      setUser(null);
+    };
+
+    window.addEventListener('app:logout', onGlobalLogout);
+    return () => window.removeEventListener('app:logout', onGlobalLogout);
+  }, []);
+
   const loadDashboardData = async () => {
     try {
       // Load real data from API

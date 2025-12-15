@@ -18,7 +18,14 @@ class SocketService {
     }
 
     this.userId = userId;
-    this.socket = io('http://localhost:5000', {
+    const ENV_SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+    const defaultSocket = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+      ? 'http://localhost:5000'
+      : (typeof window !== 'undefined' ? window.location.origin : '');
+
+    const socketUrl = ENV_SOCKET_URL && ENV_SOCKET_URL !== '' ? ENV_SOCKET_URL : defaultSocket;
+
+    this.socket = io(socketUrl, {
       autoConnect: true,
       auth: {
         userId: userId
