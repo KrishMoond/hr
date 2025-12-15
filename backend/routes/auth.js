@@ -55,7 +55,7 @@ router.post('/register',
         user: user._id,
         employeeId,
         joinDate: new Date(),
-        salary: 50000
+        salary: parseInt(process.env.DEFAULT_EMPLOYEE_SALARY) || 50000
       });
 
       await employee.save();
