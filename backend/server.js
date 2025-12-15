@@ -3,11 +3,14 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
-const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
 require('dotenv').config();
+
+// Import security middleware
+const { generalLimiter, sanitizeError } = require('./middleware/security');
+const { requestLogger, logger } = require('./middleware/logging');
 
 const app = express();
 const server = createServer(app);
@@ -44,22 +47,48 @@ const projectRoutes = require('./routes/projects');
 const projectChatRoutes = require('./routes/projectChat');
 const taskRoutes = require('./routes/tasks');
 
+// Trust proxy for accurate IP addresses
+app.set('trust proxy', 1);
+
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "ws:", "wss:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false
+}));
+
 app.use(compression());
-app.use(morgan('combined'));
+app.use(requestLogger);
 
 // Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use(limiter);
+app.use('/api/', generalLimiter);
 
-// CORS
+// Enhanced CORS configuration
 app.use(cors({
-  origin: frontendOrigins,
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (frontendOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Log unauthorized origin attempts
+    logger.warn('CORS blocked request', { origin, ip: 'unknown' });
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['X-Total-Count'],
+  maxAge: 86400 // 24 hours
 }));
 
 // Body parsing
@@ -69,10 +98,28 @@ app.use(express.urlencoded({ extended: true }));
 // Static files
 app.use('/uploads', express.static('uploads'));
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// Enhanced database connection with security options
+mongoose.connect(process.env.MONGODB_URI, {
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000
+})
+.then(() => {
+  logger.info('MongoDB connected successfully');
+})
+.catch(err => {
+  logger.error('MongoDB connection error', { error: err.message });
+  process.exit(1);
+});
+
+// Handle MongoDB connection events
+mongoose.connection.on('error', (err) => {
+  logger.error('MongoDB error', { error: err.message });
+});
+
+mongoose.connection.on('disconnected', () => {
+  logger.warn('MongoDB disconnected');
+});
 
 // Socket.IO for real-time features
 io.on('connection', (socket) => {
@@ -108,8 +155,32 @@ io.on('connection', (socket) => {
   });
 });
 
-// Routes
-app.use('/api/auth', authRoutes);
+// API versioning
+const API_VERSION = '/api/v1';
+
+// Routes with versioning
+app.use(`${API_VERSION}/auth`, authRoutes);
+app.use('/api/auth', authRoutes); // Backward compatibility
+// Versioned routes
+app.use(`${API_VERSION}/employees`, employeeRoutes);
+app.use(`${API_VERSION}/chat`, chatRoutes);
+app.use(`${API_VERSION}/messages`, messageRoutes);
+app.use(`${API_VERSION}/wellness`, wellnessRoutes);
+app.use(`${API_VERSION}/helpdesk`, helpdeskRoutes);
+app.use(`${API_VERSION}/analytics`, analyticsRoutes);
+app.use(`${API_VERSION}/settings`, settingsRoutes);
+app.use(`${API_VERSION}/ai`, aiRoutes);
+app.use(`${API_VERSION}/ai`, chanakyaRoutes);
+app.use(`${API_VERSION}/leaves`, leaveRoutes);
+app.use(`${API_VERSION}/complaints`, complaintRoutes);
+app.use(`${API_VERSION}/payroll`, payrollRoutes);
+app.use(`${API_VERSION}/attendance`, attendanceRoutes);
+app.use(`${API_VERSION}/recruitment`, recruitmentRoutes);
+app.use(`${API_VERSION}/projects`, projectRoutes);
+app.use(`${API_VERSION}/project-chat`, projectChatRoutes);
+app.use(`${API_VERSION}/tasks`, taskRoutes);
+
+// Backward compatibility routes
 app.use('/api/employees', employeeRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/messages', messageRoutes);
@@ -128,15 +199,78 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/project-chat', projectChatRoutes);
 app.use('/api/tasks', taskRoutes);
 
-// Health check
+// Enhanced health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  const healthCheck = {
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV,
+    version: process.env.npm_package_version || '1.0.0',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  };
+  
+  res.json(healthCheck);
 });
 
-// Error handling
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+// API documentation endpoint
+app.get('/api', (req, res) => {
+  res.json({
+    name: 'HR SARTHI API',
+    version: '1.0.0',
+    description: 'Intelligent Human Resource Management System API',
+    endpoints: {
+      auth: '/api/v1/auth',
+      employees: '/api/v1/employees',
+      projects: '/api/v1/projects',
+      analytics: '/api/v1/analytics'
+    },
+    documentation: '/api/docs'
+  });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Not Found',
+    message: `Route ${req.originalUrl} not found`,
+    availableRoutes: ['/api/health', '/api/v1/auth', '/api/v1/employees']
+  });
+});
+
+// Global error handling
+app.use(sanitizeError);
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    logger.info('Process terminated');
+    mongoose.connection.close(false, () => {
+      process.exit(0);
+    });
+  });
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT received, shutting down gracefully');
+  server.close(() => {
+    logger.info('Process terminated');
+    mongoose.connection.close(false, () => {
+      process.exit(0);
+    });
+  });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception', { error: err.message, stack: err.stack });
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (err) => {
+  logger.error('Unhandled Rejection', { error: err.message });
+  process.exit(1);
 });
 
 const PORT = process.env.PORT || 5000;
