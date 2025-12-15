@@ -93,10 +93,12 @@ const EnhancedProjectManagement: React.FC = () => {
   const fetchUsers = async () => {
     try {
       const api = await import('../services/api');
-      const data = await api.default.get('/auth/users');
-      setUsers(data);
+      const response = await api.default.get('/auth/users');
+      const users = response.users || response || [];
+      setUsers(Array.isArray(users) ? users : []);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([]);
     }
   };
 
@@ -550,7 +552,7 @@ const EnhancedProjectManagement: React.FC = () => {
                   className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select Manager</option>
-                  {users.filter(user => user.role === 'admin' || user.role === 'hr').map(user => (
+                  {(Array.isArray(users) ? users : []).filter(user => user.role === 'admin' || user.role === 'hr').map(user => (
                     <option key={user._id} value={user._id}>
                       {user.firstName} {user.lastName} ({user.role})
                     </option>
@@ -563,7 +565,7 @@ const EnhancedProjectManagement: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Team Members</label>
                 <div className="border border-gray-300 rounded-lg p-4 max-h-48 overflow-y-auto">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {users.map(user => (
+                    {(Array.isArray(users) ? users : []).map(user => (
                       <div key={user._id} className="flex items-center p-2 hover:bg-gray-50 rounded-lg">
                         <input
                           type="checkbox"

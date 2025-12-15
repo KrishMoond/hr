@@ -23,8 +23,9 @@ const frontendOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL |
 
 const io = new Server(server, {
   cors: {
-    origin: frontendOrigins,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    origin: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true
   }
 });
 
@@ -73,22 +74,14 @@ app.use('/api/', generalLimiter);
 // Enhanced CORS configuration
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, etc.)
-    if (!origin) return callback(null, true);
-    
-    if (frontendOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    
-    // Log unauthorized origin attempts
-    logger.warn('CORS blocked request', { origin, ip: 'unknown' });
-    return callback(new Error('Not allowed by CORS'));
+    // Allow all origins
+    callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   exposedHeaders: ['X-Total-Count'],
-  maxAge: 86400 // 24 hours
+  maxAge: 86400
 }));
 
 // Body parsing
