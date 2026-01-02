@@ -22,44 +22,76 @@ router.get('/', auth, async (req, res) => {
   try {
     const { search, department, status, page = 1, limit = 10 } = req.query;
     
-    let query = {};
+    let userQuery = {};
     
-    if (status) query.status = status;
+    // Build user query
+    if (department && department !== 'all') {
+      userQuery.department = department;
+    }
     
-    const employees = await Employee.find(query)
-      .populate('user', 'firstName lastName email phone position department location avatar')
+    if (search) {
+      userQuery.$or = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { position: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Get all users first
+    const users = await User.find(userQuery)
+      .select('firstName lastName email phone position department location avatar role isActive createdAt')
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .sort({ createdAt: -1 });
 
-    let filteredEmployees = employees;
+    // Get corresponding employee records
+    const userIds = users.map(user => user._id);
+    const employees = await Employee.find({ user: { $in: userIds } });
+    
+    // Create a map of employee data by user ID
+    const employeeMap = {};
+    employees.forEach(emp => {
+      employeeMap[emp.user.toString()] = emp;
+    });
 
-    if (search) {
-      filteredEmployees = employees.filter(emp => 
-        emp.user.firstName.toLowerCase().includes(search.toLowerCase()) ||
-        emp.user.lastName.toLowerCase().includes(search.toLowerCase()) ||
-        emp.user.email.toLowerCase().includes(search.toLowerCase()) ||
-        emp.user.position.toLowerCase().includes(search.toLowerCase())
-      );
+    // Combine user and employee data
+    const combinedData = users.map(user => {
+      const employeeData = employeeMap[user._id.toString()];
+      return {
+        _id: employeeData?._id || user._id,
+        user: user,
+        employeeId: employeeData?.employeeId || `EMP${user._id.toString().slice(-6)}`,
+        joinDate: employeeData?.joinDate || user.createdAt,
+        salary: employeeData?.salary || 0,
+        performance: employeeData?.performance || 0,
+        status: employeeData?.status || (user.isActive ? 'active' : 'inactive'),
+        skills: employeeData?.skills || [],
+        manager: employeeData?.manager || null,
+        team: employeeData?.team || []
+      };
+    });
+
+    // Apply status filter after combining data
+    let filteredEmployees = combinedData;
+    if (status) {
+      filteredEmployees = combinedData.filter(emp => emp.status === status);
     }
 
-    if (department && department !== 'all') {
-      filteredEmployees = filteredEmployees.filter(emp => 
-        emp.user.department === department
-      );
-    }
-
-    const total = await Employee.countDocuments(query);
+    const total = await User.countDocuments(userQuery);
 
     res.json({
       employees: filteredEmployees,
       totalPages: Math.ceil(total / limit),
-      currentPage: page,
+      currentPage: parseInt(page),
       total
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Get employees error:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch employees',
+      message: 'Internal server error' 
+    });
   }
 });
 

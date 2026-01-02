@@ -77,10 +77,7 @@ app.use(helmet({
 app.use(compression());
 app.use(requestLogger);
 
-// Rate limiting
-app.use('/api/', generalLimiter);
-
-// Enhanced CORS configuration
+// Enhanced CORS configuration (apply before rate-limiter so error responses include CORS headers)
 app.use(cors({
   origin: function (origin, callback) {
     // Allow all origins
@@ -92,6 +89,9 @@ app.use(cors({
   exposedHeaders: ['X-Total-Count'],
   maxAge: 86400
 }));
+
+// Rate limiting
+app.use('/api/', generalLimiter);
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));

@@ -26,7 +26,8 @@ import HRManagement from './components/HRManagement';
 import SettingsSection from './components/SettingsSection';
 import MobileDrawer from './components/MobileDrawer';
 import PayrollManagement from './components/PayrollManagement';
-import AttendanceTracking from './components/AttendanceTracking';
+import AttendanceSection from './components/AttendanceSection';
+import MyAttendanceWidget from './components/MyAttendanceWidget';
 import RecruitmentPortal from './components/RecruitmentPortal';
 import ProjectManagement from './components/ProjectManagement';
 import EnhancedProjectManagement from './components/EnhancedProjectManagement';
@@ -604,7 +605,11 @@ function App() {
           {activeTab === 'complaints' && <EnhancedComplaintManagement />}
           {activeTab === 'hr-management' && <HRManagement />}
           {activeTab === 'payroll' && <PayrollManagement />}
-          {activeTab === 'attendance' && <AttendanceTracking />}
+          {activeTab === 'attendance' && (
+            user && (user.role === 'admin' || user.role === 'hr')
+              ? <AttendanceSection />
+              : <MyAttendanceWidget />
+          )}
           {activeTab === 'recruitment' && <RecruitmentPortal />}
           {activeTab === 'projects' && <EnhancedProjectManagement />}
           {activeTab === 'my-projects' && <EnhancedEmployeeProjects />}

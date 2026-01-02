@@ -101,15 +101,32 @@ const ProjectChat: React.FC<ProjectChatProps> = ({ projectId, projectTitle, curr
     e.preventDefault();
     if (!newMessage.trim()) return;
 
+    const tempMessage = {
+      _id: Date.now().toString(),
+      sender: { 
+        firstName: currentUser.firstName, 
+        lastName: currentUser.lastName, 
+        _id: currentUser._id 
+      },
+      content: newMessage,
+      messageType: 'message' as const,
+      timestamp: new Date().toISOString()
+    };
+
+    // Add message immediately to UI
+    setMessages(prev => [...prev, tempMessage]);
+    setNewMessage('');
+
     try {
       const api = await import('../services/api');
       await api.default.post(`/project-chat/${projectId}/message`, {
         content: newMessage,
         messageType: 'message'
       });
-      setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
+      // Remove the temp message on error
+      setMessages(prev => prev.filter(msg => msg._id !== tempMessage._id));
     }
   };
 

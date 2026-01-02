@@ -370,6 +370,24 @@ class ApiService {
     return this.request('/leaves/balances');
   }
 
+  // Attendance methods
+  async getAttendance(params?: any) {
+    const queryString = params ? `?${new URLSearchParams(params)}` : '';
+    return this.request(`/attendance${queryString}`);
+  }
+
+  async markAttendance(data: any) {
+    return this.request('/attendance', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getMyAttendance(params?: any) {
+    const queryString = params ? `?${new URLSearchParams(params)}` : '';
+    return this.request(`/attendance/my${queryString}`);
+  }
+
   // Complaint methods
   async getComplaints(params?: any) {
     const queryString = params ? `?${new URLSearchParams(params)}` : '';

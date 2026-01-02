@@ -5,7 +5,8 @@ import {
   ArrowUp, ArrowDown, MoreHorizontal, Bell, Coffee
 } from 'lucide-react';
 import api from '../services/api';
-import io from 'socket.io-client';
+import socketService from '../services/socket';
+import MyAttendanceWidget from './MyAttendanceWidget';
 
 interface EmployeeDashboardProps {
   user: any;
@@ -33,11 +34,9 @@ const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ user, isLightThem
   useEffect(() => {
     loadDashboardData();
     setupSocketConnection();
-    
+
     return () => {
-      if (window.socket) {
-        window.socket.disconnect();
-      }
+      socketService.disconnect();
     };
   }, [user._id]);
 
@@ -53,38 +52,38 @@ const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ user, isLightThem
   };
 
   const setupSocketConnection = () => {
-    const socket = io('http://localhost:5000');
-    window.socket = socket;
-    
-    socket.emit('join-user', user._id);
-    
-    socket.on('metrics:update', (data) => {
-      setDashboardData((prev: any) => {
-        if (!prev) return prev;
-        
-        const updated = { ...prev };
-        const { metric, value } = data;
-        
-        // Update the appropriate section based on metric
-        if (metric === 'productivityScore') {
-          updated.productivity.score = value;
-        } else if (metric.startsWith('tasks')) {
-          const taskMetric = metric.replace('tasks', '').toLowerCase();
-          updated.tasks[taskMetric] = value;
-        } else if (metric.startsWith('goals')) {
-          const goalMetric = metric.replace('goals', '').toLowerCase();
-          updated.goals[goalMetric] = value;
-        } else if (metric.startsWith('wellness')) {
-          const wellnessMetric = metric.replace('wellness', '').toLowerCase();
-          updated.wellness[wellnessMetric] = value;
-        } else if (metric.startsWith('unread')) {
-          const notifType = metric.replace('unread', '').toLowerCase();
-          updated.notifications[notifType] = value;
-        }
-        
-        return updated;
+    try {
+      socketService.connect(user._id);
+
+      socketService.on('metrics:update', (data: any) => {
+        setDashboardData((prev: any) => {
+          if (!prev) return prev;
+
+          const updated = { ...prev };
+          const { metric, value } = data;
+
+          if (metric === 'productivityScore') {
+            updated.productivity.score = value;
+          } else if (metric.startsWith('tasks')) {
+            const taskMetric = metric.replace('tasks', '').toLowerCase();
+            updated.tasks[taskMetric] = value;
+          } else if (metric.startsWith('goals')) {
+            const goalMetric = metric.replace('goals', '').toLowerCase();
+            updated.goals[goalMetric] = value;
+          } else if (metric.startsWith('wellness')) {
+            const wellnessMetric = metric.replace('wellness', '').toLowerCase();
+            updated.wellness[wellnessMetric] = value;
+          } else if (metric.startsWith('unread')) {
+            const notifType = metric.replace('unread', '').toLowerCase();
+            updated.notifications[notifType] = value;
+          }
+
+          return updated;
+        });
       });
-    });
+    } catch (err) {
+      console.error('Socket setup failed:', err);
+    }
   };
 
   const getGreeting = () => {
@@ -353,6 +352,9 @@ const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ user, isLightThem
               ))}
             </div>
           </div>
+
+          {/* Attendance Widget */}
+          <MyAttendanceWidget />
 
           {/* Wellness Corner */}
           <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl p-6 border border-pink-100">
