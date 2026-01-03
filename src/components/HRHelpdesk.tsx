@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HelpCircle, Search, MessageSquare, FileText, DollarSign, Calendar, Send, CheckCircle } from 'lucide-react';
+import apiService from '../services/api';
 
 interface FAQ {
   id: number;
@@ -55,24 +56,32 @@ export default function HRHelpdesk() {
     }
   ];
 
-  const tickets: Ticket[] = [
-    {
-      id: 1,
-      subject: 'Salary discrepancy in November payroll',
-      category: 'Salary',
-      status: 'in-progress',
-      priority: 'high',
-      created: '2024-01-15'
-    },
-    {
-      id: 2,
-      subject: 'Leave balance not updated',
-      category: 'Leave',
-      status: 'open',
-      priority: 'medium',
-      created: '2024-01-14'
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // load tickets when tickets tab active
+    if (activeTab === 'tickets') {
+      loadTickets();
     }
-  ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const loadTickets = async () => {
+    try {
+      setTicketsLoading(true);
+      const res = await apiService.getTickets().catch(() => null);
+      // API might return { tickets: [...] } or an array
+      const arr = Array.isArray(res) ? res : (res && Array.isArray(res.tickets) ? res.tickets : []);
+      setTickets(arr as Ticket[]);
+    } catch (err) {
+      console.error('Error loading tickets', err);
+    } finally {
+      setTicketsLoading(false);
+    }
+  };
 
   const categories = [
     { id: 'all', label: 'All Categories', icon: HelpCircle },
@@ -108,11 +117,34 @@ export default function HRHelpdesk() {
     }
   };
 
-  const submitTicket = () => {
-    if (newTicket.subject && newTicket.description) {
-      console.log('Ticket submitted:', newTicket);
+  const submitTicket = async () => {
+    setSubmitError(null);
+    if (!newTicket.subject || !newTicket.description) {
+      setSubmitError('Please provide subject and description');
+      return;
+    }
+
+    try {
+      setSubmitLoading(true);
+      const payload = {
+        subject: newTicket.subject,
+        category: newTicket.category,
+        description: newTicket.description
+      };
+
+      const res = await apiService.createTicket(payload);
+      // backend may return the created ticket directly or under `ticket`
+      const created = res?.ticket ?? res;
+      if (created) {
+        setTickets((prev) => [created as Ticket, ...prev]);
+      }
+
       setNewTicket({ subject: '', category: 'general', description: '' });
-      alert('Ticket submitted successfully!');
+    } catch (err: any) {
+      console.error('Submit ticket error', err);
+      setSubmitError(err?.message || 'Could not submit ticket');
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -283,12 +315,16 @@ export default function HRHelpdesk() {
                 rows={4}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              {submitError && (
+                <div className="text-sm text-red-600">{submitError}</div>
+              )}
               <button
                 onClick={submitTicket}
-                className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"
+                disabled={submitLoading}
+                className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-all ${submitLoading ? 'bg-blue-300 text-white opacity-80 cursor-not-allowed' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
               >
                 <Send size={16} />
-                Submit Ticket
+                {submitLoading ? 'Submitting...' : 'Submit Ticket'}
               </button>
             </div>
           </div>
@@ -299,25 +335,31 @@ export default function HRHelpdesk() {
               <h3 className="text-lg font-semibold text-gray-900">My Tickets</h3>
             </div>
             <div className="divide-y divide-gray-200">
-              {tickets.map((ticket) => (
-                <div key={ticket.id} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 mb-1">{ticket.subject}</h4>
-                      <p className="text-sm text-gray-600">Category: {ticket.category}</p>
-                      <p className="text-xs text-gray-500 mt-1">Created: {ticket.created}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(ticket.status)}`}>
-                        {ticket.status}
-                      </span>
-                      <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(ticket.priority)}`}>
-                        {ticket.priority}
-                      </span>
+              {ticketsLoading ? (
+                <div className="p-6 text-center text-gray-500">Loading tickets...</div>
+              ) : tickets.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">No tickets found.</div>
+              ) : (
+                tickets.map((ticket) => (
+                  <div key={ticket.id} className="p-6 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 mb-1">{ticket.subject}</h4>
+                        <p className="text-sm text-gray-600">Category: {ticket.category}</p>
+                        <p className="text-xs text-gray-500 mt-1">Created: {ticket.created}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(ticket.status)}`}>
+                          {ticket.status}
+                        </span>
+                        <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(ticket.priority)}`}>
+                          {ticket.priority}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
