@@ -55,7 +55,7 @@ const attendanceRoutes = require('./routes/attendance');
 const recruitmentRoutes = require('./routes/recruitment');
 const projectRoutes = require('./routes/projects');
 const projectChatRoutes = require('./routes/projectChat');
-const taskRoutes = require('./routes/tasks');
+const taskRoutes = require('./routes/tasks'); 
 
 // Trust proxy for accurate IP addresses
 app.set('trust proxy', 1);

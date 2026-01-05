@@ -383,6 +383,13 @@ class ApiService {
     });
   }
 
+  async markMyAttendance(data: any) {
+    return this.request('/attendance/my', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   async getMyAttendance(params?: any) {
     const queryString = params ? `?${new URLSearchParams(params)}` : '';
     return this.request(`/attendance/my${queryString}`);

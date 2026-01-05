@@ -63,6 +63,11 @@ router.post('/', auth, authorize('admin', 'hr'), [
 
     const { employee, date, status, checkIn, checkOut, notes } = req.body;
 
+    // Prevent admins from marking their own attendance
+    if (req.user.role === 'admin' && req.user.id === employee) {
+      return res.status(403).json({ message: 'Admins are not allowed to mark their own attendance' });
+    }
+
     // Check if employee exists
     const employeeExists = await User.findById(employee);
     if (!employeeExists) {
@@ -85,6 +90,10 @@ router.post('/', auth, authorize('admin', 'hr'), [
       existingAttendance.checkOut = checkOut ? new Date(checkOut) : existingAttendance.checkOut;
       existingAttendance.notes = notes || existingAttendance.notes;
       existingAttendance.markedBy = req.user.id;
+      existingAttendance.markedVia = req.user.role === 'admin' ? 'admin' : 'web';
+      existingAttendance.ipAddress = req.ip || req.headers['x-forwarded-for'] || existingAttendance.ipAddress;
+      existingAttendance.timezone = req.body.timezone || existingAttendance.timezone;
+      existingAttendance.location = req.body.location || existingAttendance.location;
 
       // Calculate hours worked
       if (existingAttendance.checkIn && existingAttendance.checkOut) {
@@ -109,7 +118,11 @@ router.post('/', auth, authorize('admin', 'hr'), [
       checkIn: checkIn ? new Date(checkIn) : null,
       checkOut: checkOut ? new Date(checkOut) : null,
       notes,
-      markedBy: req.user.id
+      markedBy: req.user.id,
+      markedVia: req.user.role === 'admin' ? 'admin' : 'web',
+      ipAddress: req.ip || req.headers['x-forwarded-for'],
+      timezone: req.body.timezone,
+      location: req.body.location
     });
 
     // Calculate hours worked
@@ -161,6 +174,90 @@ router.get('/my', auth, async (req, res) => {
     res.json({ attendance, stats });
   } catch (error) {
     console.error('Get my attendance error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Employee marks their own attendance
+router.post('/my', auth, [
+  body('date').isISO8601().withMessage('Valid date is required'),
+  body('status').isIn(['present', 'absent', 'on-leave', 'half-day']).withMessage('Valid status is required')
+], async (req, res) => {
+  try {
+    // Prevent admins from using this endpoint to mark themselves
+    if (req.user.role === 'admin') {
+      return res.status(403).json({ message: 'Admins are not allowed to mark their own attendance' });
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { date, status, checkIn, checkOut, notes, timezone, location } = req.body;
+
+    // Check if attendance exists
+    const existingAttendance = await Attendance.findOne({
+      employee: req.user.id,
+      date: {
+        $gte: new Date(date),
+        $lt: new Date(new Date(date).getTime() + 24 * 60 * 60 * 1000)
+      }
+    });
+
+    if (existingAttendance) {
+      existingAttendance.status = status;
+      existingAttendance.checkIn = checkIn ? new Date(checkIn) : existingAttendance.checkIn;
+      existingAttendance.checkOut = checkOut ? new Date(checkOut) : existingAttendance.checkOut;
+      existingAttendance.notes = notes || existingAttendance.notes;
+      existingAttendance.markedBy = req.user.id;
+      existingAttendance.markedVia = req.body.markedVia || 'mobile';
+      existingAttendance.ipAddress = req.ip || req.headers['x-forwarded-for'] || existingAttendance.ipAddress;
+      existingAttendance.timezone = timezone || existingAttendance.timezone;
+      existingAttendance.location = location || existingAttendance.location;
+
+      if (existingAttendance.checkIn && existingAttendance.checkOut) {
+        const hours = (existingAttendance.checkOut - existingAttendance.checkIn) / (1000 * 60 * 60);
+        existingAttendance.hoursWorked = Math.max(0, hours);
+      }
+
+      await existingAttendance.save();
+
+      const updated = await Attendance.findById(existingAttendance._id)
+        .populate('employee', 'firstName lastName email position department')
+        .populate('markedBy', 'firstName lastName');
+
+      return res.json(updated);
+    }
+
+    const attendance = new Attendance({
+      employee: req.user.id,
+      date: new Date(date),
+      status,
+      checkIn: checkIn ? new Date(checkIn) : null,
+      checkOut: checkOut ? new Date(checkOut) : null,
+      notes,
+      markedBy: req.user.id,
+      markedVia: req.body.markedVia || 'mobile',
+      ipAddress: req.ip || req.headers['x-forwarded-for'],
+      timezone,
+      location
+    });
+
+    if (attendance.checkIn && attendance.checkOut) {
+      const hours = (attendance.checkOut - attendance.checkIn) / (1000 * 60 * 60);
+      attendance.hoursWorked = Math.max(0, hours);
+    }
+
+    await attendance.save();
+
+    const newAttendance = await Attendance.findById(attendance._id)
+      .populate('employee', 'firstName lastName email position department')
+      .populate('markedBy', 'firstName lastName');
+
+    res.status(201).json(newAttendance);
+  } catch (error) {
+    console.error('Mark my attendance error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

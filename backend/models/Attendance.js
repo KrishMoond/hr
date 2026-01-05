@@ -28,6 +28,21 @@ const attendanceSchema = new mongoose.Schema({
   notes: {
     type: String
   },
+  // extra metadata to make records more realistic
+  timezone: {
+    type: String
+  },
+  location: {
+    type: String
+  },
+  ipAddress: {
+    type: String
+  },
+  markedVia: {
+    type: String,
+    enum: ['web', 'mobile', 'kiosk', 'admin'],
+    default: 'web'
+  },
   markedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
